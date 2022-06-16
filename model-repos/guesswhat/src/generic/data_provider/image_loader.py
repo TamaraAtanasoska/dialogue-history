@@ -5,7 +5,6 @@ import h5py
 
 from generic.data_provider.image_preprocessors import resize_image, scaled_crop_and_pad
 
-
 # Why doing an image builder/loader?
 # Well, there are two reasons:
 #  - first you want to abstract the kind of image you are using (raw/conv/feature) when you are loading the dataset/batch.
@@ -36,28 +35,12 @@ class AbstractImgBuilder(object):
     def require_multiprocess(self):
         return self.require_process
 
-
 class AbstractImgLoader(object):
     def __init__(self, img_path):
         self.img_path = img_path
-        self.buffer = None
 
     def get_image(self, **kwargs):
-        if self.buffer is None:
-            return self._get_image(**kwargs)
-        else:
-            return self.buffer
-
-    def _get_image(self, **kwargs):
         pass
-
-    def bufferize(self, **kwargs):
-        if self.buffer is None:
-            self.buffer = self.get_image(**kwargs)
-
-    def flush(self):
-        self.buffer = None
-
 
 class DummyImgBuilder(AbstractImgBuilder, AbstractImgLoader):
     def __init__(self, img_dir, size=1000):
@@ -67,9 +50,8 @@ class DummyImgBuilder(AbstractImgBuilder, AbstractImgLoader):
     def build(self, image_id, filename, **kwargs):
         return self
 
-    def _get_image(self, **kwargs):
+    def get_image(self, **kwargs):
         return np.zeros(self.size)
-
 
 class ErrorImgLoader(AbstractImgLoader):
     def __init__(self, img_path):
@@ -79,20 +61,19 @@ class ErrorImgLoader(AbstractImgLoader):
         assert False, "The image/crop is not available in file: {}".format(self.img_path)
 
 
-h5_basename = "features.h5"
-h5_feature_key = "features"
-h5_idx_key = "idx2img"
 
+h5_basename="features.h5"
+h5_feature_key="features"
+h5_idx_key="idx2img"
 
 class h5FeatureBuilder(AbstractImgBuilder):
-    def __init__(self, img_dir, bufferize, scale):
+    def __init__(self, img_dir, bufferize):
         AbstractImgBuilder.__init__(self, img_dir, is_raw=False)
         self.bufferize = bufferize
         self.h5files = dict()
         self.img2idx = dict()
-        self.scale = scale
 
-    def build(self, image_id, filename, optional=True, which_set=None, **kwargs):
+    def build(self, image_id, filename, optional=True, which_set=None,**kwargs):
 
         # Is the h5 features split into train/val/etc. files or gather into a single file
         if which_set is not None:
@@ -101,7 +82,7 @@ class h5FeatureBuilder(AbstractImgBuilder):
             h5filename = h5_basename
 
         # Build full bath
-        h5filepath = os.path.join(self.img_dir, h5filename)
+        h5filepath = os.path.join(self.img_dir,h5filename)
 
         # Retrieve
         if h5filename not in self.h5files:
@@ -112,11 +93,11 @@ class h5FeatureBuilder(AbstractImgBuilder):
             # We then need a mapping between both of them
             if h5_idx_key in h5file:
                 # Retrieve id mapping from file
-                img2idx = {id_img: id_h5 for id_h5, id_img in enumerate(h5file[h5_idx_key])}
+                img2idx = {id_img : id_h5 for id_h5, id_img in enumerate(h5file[h5_idx_key])}
             else:
                 # Assume their is a perfect identity between image_id and h5_id
                 no_images = h5file[h5_feature_key].shape[0]
-                img2idx = {k: k for k in range(no_images)}
+                img2idx = {k : k for k in range(no_images) }
 
             self.h5files[h5filename] = h5file
             self.img2idx[h5filename] = img2idx
@@ -124,14 +105,13 @@ class h5FeatureBuilder(AbstractImgBuilder):
             h5file = self.h5files[h5filename]
             img2idx = self.img2idx[h5filename]
 
-        if optional and image_id in img2idx or (not optional):
-            loader = h5FeatureLoader(h5filepath, h5file=h5file, id=img2idx[image_id])
-            if self.bufferize:
-                loader.bufferize()
-            return loader
+        if self.bufferize:
+            if (optional and image_id in img2idx) or (not optional):
+                return h5FeatureBufloader(h5filepath, h5file=h5file, id=img2idx[image_id])
+            else:
+                return ErrorImgLoader(h5filepath)
         else:
-            return None
-
+            return h5FeatureLoader(h5filepath, h5file=h5file, id=img2idx[image_id])
 
 # Load while creating batch
 class h5FeatureLoader(AbstractImgLoader):
@@ -140,12 +120,20 @@ class h5FeatureLoader(AbstractImgLoader):
         self.h5file = h5file
         self.id = id
 
-    def _get_image(self, **kwargs):
+    def get_image(self, **kwargs):
         return self.h5file[h5_feature_key][self.id]
 
-    # Make DeepCopy <=> shallow copy (as h5py file handler do not support deepcopy)
-    def __deepcopy__(self, memo):
-        return h5FeatureLoader(self.img_path, h5file=self.h5file, id=self.id)
+# Load while loading dataset (requires a lot of memory)
+class h5FeatureBufloader(AbstractImgLoader):
+    def __init__(self, img_path, h5file, id):
+        AbstractImgLoader.__init__(self, img_path)
+        self.data = h5file[h5_feature_key][id]
+
+    def get_image(self, **kwargs):
+        return self.data
+
+
+
 
 
 class RawImageBuilder(AbstractImgBuilder):
@@ -159,7 +147,6 @@ class RawImageBuilder(AbstractImgBuilder):
         img_path = os.path.join(self.img_dir, filename)
         return RawImageLoader(img_path, self.width, self.height, channel=self.channel)
 
-
 class RawImageLoader(AbstractImgLoader):
     def __init__(self, img_path, width, height, channel):
         AbstractImgLoader.__init__(self, img_path)
@@ -167,10 +154,11 @@ class RawImageLoader(AbstractImgLoader):
         self.height = height
         self.channel = channel
 
-    def _get_image(self, **kwargs):
+
+    def get_image(self, **kwargs):
         img = Image.open(self.img_path).convert('RGB')
 
-        img = resize_image(img, self.width, self.height)
+        img = resize_image(img, self.width , self.height)
         img = np.array(img, dtype=np.float32)
 
         if self.channel is not None:
@@ -193,6 +181,7 @@ class RawCropBuilder(AbstractImgBuilder):
         return RawCropLoader(img_path, self.width, self.height, scale=self.scale, bbox=bbox, channel=self.channel)
 
 
+
 class RawCropLoader(AbstractImgLoader):
     def __init__(self, img_path, width, height, scale, bbox, channel):
         AbstractImgLoader.__init__(self, img_path)
@@ -202,35 +191,31 @@ class RawCropLoader(AbstractImgLoader):
         self.bbox = bbox
         self.scale = scale
 
-    def _get_image(self, **kwargs):
+    def get_image(self, **kwargs):
+
         img = Image.open(self.img_path).convert('RGB')
 
         crop = scaled_crop_and_pad(raw_img=img, bbox=self.bbox, scale=self.scale)
-        crop = resize_image(crop, self.width, self.height)
+        crop = resize_image(crop, self.width , self.height)
         crop = np.array(crop, dtype=np.float32)
 
-        # should it be before/after the padding?
         if self.channel is not None:
-            img -= self.channel[None, None, :]
+            crop -= self.channel[None, None, :]
 
         return crop
 
 
+
 def get_img_builder(config, image_dir, is_crop=False, bufferize=None):
+
     image_input = config["image_input"]
 
-    scale = None
-    if is_crop:
-        scale = config["scale"]
-
-    if image_input in ["fc8", "fc7"]:
+    if image_input in ["fc8","fc7"]:
         bufferize = bufferize if bufferize is not None else True
-        loader = h5FeatureBuilder(image_dir, bufferize=bufferize, scale=scale)
-
+        loader = h5FeatureBuilder(image_dir, bufferize=bufferize)
     elif image_input in ["conv", "raw_h5"]:
         bufferize = bufferize if bufferize is not None else False
-        loader = h5FeatureBuilder(image_dir, bufferize=bufferize, scale=scale)
-
+        loader = h5FeatureBuilder(image_dir, bufferize=bufferize)
     elif image_input == "raw":
         if is_crop:
             loader = RawCropBuilder(image_dir,
@@ -240,16 +225,19 @@ def get_img_builder(config, image_dir, is_crop=False, bufferize=None):
                                     channel=config.get("channel", None))
         else:
             loader = RawImageBuilder(image_dir,
-                                     height=config["dim"][0],
-                                     width=config["dim"][1],
-                                     channel=config.get("channel", None))
+                                    height=config["dim"][0],
+                                    width=config["dim"][1],
+                                    channel=config.get("channel", None))
     else:
         assert False, "incorrect image input: {}".format(image_input)
 
     return loader
 
+
+
+
 # Legacy code
-# ---------------------------------------------
+#---------------------------------------------
 #
 # class ConvBuilder(AbstractImgBuilder):
 #     def __init__(self, img_dir):

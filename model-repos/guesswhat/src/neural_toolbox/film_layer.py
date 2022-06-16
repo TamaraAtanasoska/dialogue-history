@@ -3,7 +3,6 @@ import tensorflow.contrib.slim as slim
 
 import neural_toolbox.ft_utils as ft_utils
 
-
 def film_layer(ft, context, reuse=False):
     """
     A very basic FiLM layer with a linear transformation from context to FiLM parameters
@@ -37,11 +36,14 @@ def film_layer(ft, context, reuse=False):
 
 class FiLMResblock(object):
     def __init__(self, features, context, is_training,
-                 feature_size,
                  film_layer_fct=film_layer,
                  kernel1=list([1, 1]),
                  kernel2=list([3, 3]),
+                 conv_weights_regularizer=None,
                  spatial_location=True, reuse=None):
+
+        # Retrieve the size of the feature map
+        feature_size = int(features.get_shape()[3])
 
         # Append a mask with spatial location to the feature map
         if spatial_location:
@@ -49,30 +51,33 @@ class FiLMResblock(object):
 
         # First convolution
         self.conv1_out = slim.conv2d(features,
-                                     num_outputs=feature_size,
-                                     kernel_size=kernel1,
-                                     activation_fn=tf.nn.relu,
-                                     scope='conv1',
-                                     reuse=reuse)
+                                 num_outputs=feature_size,
+                                 kernel_size=kernel1,
+                                 activation_fn=tf.nn.relu,
+                                 weights_regularizer=conv_weights_regularizer,
+                                 scope='conv1',
+                                 reuse=reuse)
 
         # Second convolution
         self.conv2 = slim.conv2d(self.conv1_out,
                                  num_outputs=feature_size,
                                  kernel_size=kernel2,
                                  activation_fn=None,
+                                 weights_regularizer=conv_weights_regularizer,
                                  scope='conv2',
                                  reuse=reuse)
 
         # Center/reduce output (Batch Normalization with no training parameters)
         self.conv2_bn = slim.batch_norm(self.conv2,
-                                        center=False,
-                                        scale=False,
-                                        decay=0.9,
-                                        is_training=is_training,
-                                        reuse=reuse)
+                                  center=False,
+                                  scale=False,
+                                  trainable=False,
+                                  is_training=is_training,
+                                  scope="bn",
+                                  reuse=reuse)
 
         # Apply FILM layer Residual connection
-        with tf.variable_scope("FiLM_layer", reuse=reuse):
+        with tf.variable_scope("FiLM", reuse=reuse):
             self.conv2_film = film_layer_fct(self.conv2_bn, context, reuse=reuse)
 
         # Apply ReLU

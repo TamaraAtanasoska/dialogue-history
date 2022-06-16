@@ -1,22 +1,8 @@
-from PIL import Image, ImageColor
+from PIL import Image
 import numpy as np
 
 def resize_image(img, width, height):
     return img.resize((width, height), resample=Image.BILINEAR)
-
-
-def gw2coco_bbox(guesswhat_bbox, width, height):
-
-   coco_bbox = np.copy(guesswhat_bbox)
-
-   coco_bbox[0] = (coco_bbox[0]+1) * width / 2
-   coco_bbox[1] = height - (coco_bbox[1]+coco_bbox[3]+1)*height/2
-
-   coco_bbox[2] = coco_bbox[2] * width / 2
-   coco_bbox[3] = coco_bbox[3] * height / 2
-
-   return coco_bbox
-
 
 def get_spatial_feat(bbox, im_width, im_height):
     # Rescale features fom -1 to 1
@@ -62,19 +48,8 @@ def scaled_crop_and_pad(bbox, raw_img, scale=1.0):
 
     # rescaling the crop
     max_side = max(crop_w, crop_h)
-
-    black_color = ImageColor.getcolor("black", crop.mode)
-    background = Image.new(crop.mode, (max_side, max_side), black_color)
+    background = Image.new('RGB', (max_side, max_side), (0, 0, 0))
     background.paste(im=crop, box=(((max_side - crop_w) // 2), (max_side - crop_h) // 2))
-
     return background
 
 
-def scale_bbox(bbox, im_width, im_height):
-    new_bbox = bbox
-    new_bbox[0] /= im_width
-    new_bbox[2] /= im_width
-    new_bbox[1] /= im_height
-    new_bbox[3] /= im_height
-
-    return new_bbox

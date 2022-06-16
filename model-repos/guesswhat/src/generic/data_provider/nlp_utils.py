@@ -18,11 +18,11 @@ class GloveEmbeddings(object):
                 vectors.append(np.zeros((self.glove_dim,)))
         return vectors
 
-
 def padder(list_of_tokens, seq_length=None, padding_symbol=0, max_seq_length=0):
 
     if seq_length is None:
         seq_length = np.array([len(q) for q in list_of_tokens], dtype=np.int32)
+
 
     if max_seq_length == 0:
         max_seq_length = seq_length.max()

@@ -26,7 +26,6 @@ class AbstractNetwork(object):
     def get_accuracy(self):
         pass
 
-
 # Should be in a different package as it depends on CBN (let's keep things simple!)
 class ResnetModel(AbstractNetwork):
     def __init__(self, scope_name, device=''):

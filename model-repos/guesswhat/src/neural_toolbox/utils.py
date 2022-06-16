@@ -1,108 +1,67 @@
 import tensorflow as tf
 from tensorflow.python.ops.init_ops import UniformUnitScaling, Constant
 
-
 #TODO slowly delete those modules
 
 
-from tensorflow.python.layers import base
-
-class MultiLayers(base.Layer):
-   """ Multi Layer Class - Applies multiple layers sequentially """
-
-   def __init__(self, layers, **kwargs):
-       """ Constructor
-           :param layers: A list of layers to apply
-           :param kwargs: Optional. Keyword arguments
-       """
-       super(MultiLayers, self).__init__(**kwargs)
-       self.layers = layers
-
-   def call(self, inputs, **kwargs):
-       """ Sequentially calls each layer with the output of the previous one """
-       outputs = inputs
-       for layer in self.layers:
-           outputs = layer(outputs)
-       return outputs
-
-   def _compute_output_shape(self, input_shape):
-       """ Computes the output shape given the input shape """
-       output_shape = input_shape
-       for layer in self.layers:
-           output_shape = layer._compute_output_shape(output_shape)
-       return output_shape
+def get_embedding(lookup_indices, n_words, n_dim,
+                  scope="embedding", reuse=False):
+    with tf.variable_scope(scope, reuse=reuse):
+        with tf.control_dependencies([tf.assert_non_negative(n_words - tf.reduce_max(lookup_indices))]):
+            embedding_matrix = tf.get_variable(
+                'W', [n_words, n_dim],
+                initializer=tf.random_uniform_initializer(-0.08, 0.08))
+            embedded = tf.nn.embedding_lookup(embedding_matrix, lookup_indices)
+            return embedded
 
 
-def masked_softmax(scores, mask):
+def fully_connected(inp, n_out, activation=None, scope="fully_connected",
+                    weight_initializer=UniformUnitScaling(),
+                    init_bias=0.0, use_bias=True, reuse=False):
+    with tf.variable_scope(scope, reuse=reuse):
+        inp_size = int(inp.get_shape()[1])
+        shape = [inp_size, n_out]
+        weight = tf.get_variable(
+            "W", shape,
+            initializer=weight_initializer)
+        out = tf.matmul(inp, weight)
 
-    # subtract max for stability
-    scores = scores - tf.tile(tf.reduce_max(scores, axis=(1,), keep_dims=True), [1, tf.shape(scores)[1]])
+        if use_bias:
+            bias = tf.get_variable(
+                "b", [n_out],
+                initializer=Constant(init_bias))
+            out += bias
 
-    # compute padded softmax
-    exp_scores = tf.exp(scores)
-    exp_scores *= mask
-    exp_sum_scores = tf.reduce_sum(exp_scores, axis=1, keep_dims=True)
-    return exp_scores / tf.tile(exp_sum_scores, [1, tf.shape(exp_scores)[1]])
-
-def iou_accuracy(box1, box2):
-    """
-    Args:
-        box1: shape (batch, 4) x1, y1, w, h
-        box2: shape (batch, 4) x1, y1, w, h
-
-    Reurns:
-        Tensor with shape (batch)
-        accuracy of the IoU (intersection over union) between box1 and box2 (element wise)
-        (If Iou > 0.5 the object is considered as found)
-    """
-
-    x11, y11, width1, height1 = tf.split(box1, 4, axis=1)
-    x21, y21, width2, height2 = tf.split(box2, 4, axis=1)
-
-    x12 = x11 + width1
-    y12 = y11 - height1
-
-    x22 = x21 + width2
-    y22 = y21 - height2
-
-    xI1 = tf.maximum(x11, tf.transpose(x21))
-    yI1 = tf.maximum(y11, tf.transpose(y21))
-
-    xI2 = tf.minimum(x12, tf.transpose(x22))
-    yI2 = tf.minimum(y12, tf.transpose(y22))
-
-    inter_area = (xI2 - xI1 + 1) * (yI2 - yI1 + 1)
-
-    box1_area = (x12 - x11 + 1) * (y12 - y11 + 1)
-    box2_area = (x22 - x21 + 1) * (y22 - y21 + 1)
-
-    union = (box1_area + tf.transpose(box2_area)) - inter_area
-    all_scores = tf.maximum(inter_area / union, 0)
-    bbox_score = tf.diag_part(all_scores)
-
-    # If Iou>0.5 the IoU is considered as found.
-    accuracy = tf.where(bbox_score > 0.5, tf.ones_like(bbox_score), tf.zeros_like(bbox_score))
-    return accuracy
+    if activation == 'relu':
+        return tf.nn.relu(out)
+    if activation == 'softmax':
+        return tf.nn.softmax(out)
+    if activation == 'tanh':
+        return tf.tanh(out)
+    return out
 
 
-def main():
-
-    import numpy as np
-    import cocoapi.PythonAPI.pycocotools.mask as cocoapi
+def rank(inp):
+    return len(inp.get_shape())
 
 
-    with tf.Session() as sess:
+def cross_entropy(y_hat, y):
+    if rank(y) == 2:
+        return -tf.reduce_mean(y * tf.log(y_hat))
+    if rank(y) == 1:
+        ind = tf.range(tf.shape(y_hat)[0]) * tf.shape(y_hat)[1] + y
+        flat_prob = tf.reshape(y_hat, [-1])
+        return -tf.log(tf.gather(flat_prob, ind))
+    raise ValueError('Rank of target vector must be 1 or 2')
 
-        sq1 = np.array([[0, 0, 10, 10], [39, 63, 203, 112]])
-        sq2 = np.array([[3, 4, 24, 32], [54, 66, 198, 114]])
 
-        in1 = tf.placeholder(tf.float64, shape=[None, 4])
-        in2 = tf.placeholder(tf.float64, shape=[None, 4])
-
-        scores = iou_accuracy(in1,in2)
-
-        print("perso score", sess.run(fetches=[scores], feed_dict={in1:sq1,in2:sq2}))
-        print("coco score", cocoapi.iou(sq1,sq2,[]))
-
-if __name__ == "__main__":
-    main()
+def error(y_hat, y):
+    if rank(y) == 1:
+        mistakes = tf.not_equal(
+            tf.argmax(y_hat, 1), tf.cast(y, tf.int64))
+    elif rank(y) == 2:
+        mistakes = tf.not_equal(
+            tf.argmax(y_hat, 1), tf.argmax(y, 1))
+    else:
+        assert False
+    return tf.cast(mistakes, tf.float32)
