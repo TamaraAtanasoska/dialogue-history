@@ -5,7 +5,7 @@ import tensorflow.contrib.layers as tfc_layers
 def create_optimizer(network, config, finetune=list(), optim_cst=tf.train.AdamOptimizer, var_list=None, apply_update_ops=True, loss=None):
 
     # Retrieve conf
-    lrt = config['learning_rate']
+    lrt = config['optimizer']['learning_rate']
     clip_val = config.get('clip_val', 0.)
     weight_decay = config.get('weight_decay', 0.)
 
@@ -48,7 +48,7 @@ def create_optimizer(network, config, finetune=list(), optim_cst=tf.train.AdamOp
 def create_multi_gpu_optimizer(networks, config, finetune=list(), optim_cst=tf.train.AdamOptimizer):
 
     # Retrieve conf
-    lrt = config['learning_rate']
+    lrt = config['optimizer']['learning_rate']
     clip_val = config.get('clip_val', 0.)
     weight_decay = config.get('weight_decay', 0.)
     weight_decay_remove = config.get('weight_decay_remove', [])
