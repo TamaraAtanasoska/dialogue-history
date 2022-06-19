@@ -79,7 +79,7 @@ def extract_features(
     
                     # Store idx to image.id
                     for i, game in enumerate(batch["raw"]):
-                        idx2img[pt_hd5 + i] = game.image.id
+                        idx2img[pt_hd5 + i] = int(game.image.id)
     
                     # update hd5 pointer
                     pt_hd5 += batch_size
