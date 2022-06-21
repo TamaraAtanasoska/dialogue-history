@@ -131,6 +131,10 @@ dmypy.json
 #OS
 .DS_store
 
+=======
+
 #Project specific
 model-repos/guesswhat/data/
 model-repos/guesswhat/out/
+model-repos/aixia2021/bin/
+

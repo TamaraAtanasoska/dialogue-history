@@ -6,7 +6,7 @@ import json
 import os
 
 
-# from nltk.tokenize import TweetTokenizer
+from nltk.tokenize import TweetTokenizer
 
 def create_vocab(data_dir, data_file, min_occ):
     """ Creates a new vocablurary file in data_dir """
@@ -30,10 +30,10 @@ def create_vocab(data_dir, data_file, min_occ):
     path = os.path.join(data_dir, data_file)
     with gzip.open(path) as f:
         for k , line in enumerate(f):
-            dialogue = json.loads(line.decode("utf-8"))
+            dialogue = json.loads(line.decode("utf-8")) # contains questions, image and objects information, correct object id and status of dialogue
 
             for qa in dialogue['qas']:
-                tokens = tknzr.tokenize(qa['question'])
+                tokens = tknzr.tokenize(qa['q'])
                 for tok in tokens:
                     if tok not in word2occ:
                         word2occ[tok] = 1
@@ -41,7 +41,7 @@ def create_vocab(data_dir, data_file, min_occ):
                         word2occ[tok] += 1
 
     for word, occ in word2occ.items():
-        if occ >= min_occ and word.count('.') <= 1:
+        if occ >= min_occ and word.count('.') <= 1: # why dots condition
             word2i[word] = len(word2i)
 
     i2word = {v:k for k,v in word2i.items()}
@@ -60,7 +60,7 @@ def create_vocab(data_dir, data_file, min_occ):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-data_dir", type=str, default="data", help='Target Data Directory to store ythe vocab file')
+    parser.add_argument("-data_dir", type=str, default="data", help='Target Data Directory to store the vocab file')
     parser.add_argument("-data_file", type=str, default="guesswhat.train.jsonl.gz", help='Guesswhat train data file')
     parser.add_argument("-min_occ", type=int, default=3, help='Min frequency of word to be included in the vocab' )
 
