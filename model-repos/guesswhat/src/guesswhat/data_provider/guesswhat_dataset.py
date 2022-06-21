@@ -45,7 +45,7 @@ class Game:
                              image=self.image)
 
             self.objects.append(new_obj)
-            if o['id'] == object_id:
+            if o['id'] == str(object_id):
                 self.object = new_obj  # Keep ref on the object to find
 
         self.question_ids = [qa['id'] for qa in qas]
