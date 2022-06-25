@@ -36,6 +36,7 @@ if __name__ == '__main__':
     parser.add_argument("-resnet", action='store_true', help='This flag will cause the program to use the image features from the ResNet forward pass instead of the precomputed ones.')
     parser.add_argument("-modulo", type=int, default=1, help='This flag will cause the guesser to be updated every modulo number of epochs')
     parser.add_argument("-no_decider", action='store_true', help='This flag will cause the decider to be turned off')
+    parser.add_argument("-ckpt", type=str, help='path to stored checkpoint', default=None)
 
     args = parser.parse_args()
     print(args.exp_name)
@@ -60,6 +61,9 @@ if __name__ == '__main__':
     # Init Model
     model = Ensemble(**ensemble_args)
     # TODO Checkpoint loading
+    if args.ckpt is not None:
+        checkpoint = torch.load('bin/SL/ensemble_base2022_06_24_18_53/model_ensemble_ensemble_base_E_0')
+        model.load_state_dict(checkpoint)
 
     if use_cuda:
         model.cuda()
@@ -86,6 +90,7 @@ if __name__ == '__main__':
 
     # TODO Use different optimizers for different modules if required.
     optimizer = optim.Adam(model.parameters(), optimizer_args['lr'])
+    #optimizer.load_state_dict(checkpoint['optimizer_state_dict']) #TODO
 
     if args.resnet:
         #This was for the new image case, we don't use it
@@ -206,7 +211,7 @@ if __name__ == '__main__':
                             objects_feat=sample["objects_feat"][mask]
                         )
 
-                        word_logits_loss += _cross_entropy(qgen_out.view(-1, 4901), sample['target_q'][mask].view(-1)) #TODO remove this hardcoded number
+                        word_logits_loss += _cross_entropy(qgen_out.view(-1, qgen_out.shape[-1]), sample['target_q'][mask].view(-1)) #TODO remove this hardcoded number
 
                         decider_loss +=  ensemble_args['decider']['ask_weight'] * decider_cross_entropy(decider_out.squeeze(1), sample['decider_tgt'][mask])
                         ask_accuracy = calculate_accuracy( decider_out.squeeze(1), sample['decider_tgt'][mask])

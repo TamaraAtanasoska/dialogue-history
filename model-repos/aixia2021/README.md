@@ -25,3 +25,95 @@ isbn="978-3-030-77091-4"
 
 ## Abstract
 We focus on visually grounded dialogue history encoding. We show that GuessWhat?! can be used as a “diagnostic” dataset to understand whether State-of-the-Art encoders manage to capture salient information in the dialogue history. We compare models across several dimensions: the architecture (Recurrent Neural Networks vs. Transformers), the input modalities (only language vs. language and vision), and the model background knowledge (trained from scratch vs. pre-trained and then fine-tuned on the downstream task). We show that pre-trained Transformers, RoBERTa and LXMERT, are able to identify the most salient information independently of the order in which the dialogue history is processed. Moreover, we find that RoBERTa handles the dialogue structure to some extent; instead LXMERT can effectively ground short dialogues, but it fails in processing longer dialogues having a more complex structure.
+
+
+## Setup
+
+Start by creating virtual environment and installing required packages to 
+run all experiments successfully.
+
+```bash
+# change ENV_NAME to appropriate name
+conda create -n ENV_NAME python=3.9
+conda activate ENV_NAME
+```
+
+To run experiment faster it is recommended to use GPU. Our setup include 
+NVIDIA GeForce GTX 1080 Ti with CUDA 11.6 installed and we use following 
+command to install PyTorch.
+```bash
+# Remember to activate conda environment
+pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
+```
+You can find appropriate installation for PyTorch from here: 
+https://pytorch.org/get-started/locally/
+
+Once PyTorch is installed, now we can install all other required packages 
+using following command:
+
+```bash
+# Remember to activate conda environment and be in same directory where 
+# requirement.txt is present
+pip install -r requirement.txt
+```
+
+## Data
+GuessWhat?! dataset can be downloaded using following commands:
+
+```bash
+wget https://florian-strub.com/guesswhat.train.jsonl.gz -P data/
+wget https://florian-strub.com//guesswhat.valid.jsonl.gz -P data/
+wget https://florian-strub.com//guesswhat.test.jsonl.gz -P data/
+```
+To download the MS Coco dataset, please follow the following instruction:
+
+```bash
+wget http://msvocds.blob.core.windows.net/coco2014/train2014.zip -P data/img/
+unzip data/img/train2014.zip -d data/img/raw
+
+wget http://msvocds.blob.core.windows.net/coco2014/val2014.zip -P data/img/
+unzip data/img/val2014.zip -d data/img/raw
+```
+
+## Preprocessing
+
+To train model we require various input files mentioned in [config](config/SL/config.json) file
+for respective training module. Some of these input files are not 
+created on the go, so we create them separately before training.  
+
+### ResNet image features
+To get ResNet image feature, run following command:
+```bash
+# Image directory is hard coded in the script
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
+python utils/ExtractImgfeatures.py
+```
+
+### ResNet object features
+To get ResNet object feature, run following command:
+```bash
+# Here image_dir should contain both train and val images in same directory
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
+python utils/extract_object_features.py \
+-image_dir data/img/raw \
+-training_set data/guesswhat.train.jsonl.gz \
+-validation_set data/guesswhat.valid.jsonl.gz \
+-objects_features_index_path data/objects_features_index_example.json \
+-objects_features_path data/objects_features_example.h5
+```
+
+
+### LXMERT images features
+TODO
+
+## Training
+
+Train V-LSTM model using following command:
+```bash
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
+python train/SL/train_base.py \
+-modulo 7 \
+-no_decider \
+-exp_name test \
+-bin_name test
+```

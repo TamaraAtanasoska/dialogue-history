@@ -6,7 +6,9 @@ import json
 import os
 
 
-from nltk.tokenize import TweetTokenizer
+# from nltk.tokenize import TweetTokenizer
+from nltk import TweetTokenizer
+
 
 def create_vocab(data_dir, data_file, min_occ):
     """ Creates a new vocablurary file in data_dir """
@@ -30,7 +32,7 @@ def create_vocab(data_dir, data_file, min_occ):
     path = os.path.join(data_dir, data_file)
     with gzip.open(path) as f:
         for k , line in enumerate(f):
-            dialogue = json.loads(line.decode("utf-8")) # contains questions, image and objects information, correct object id and status of dialogue
+            dialogue = json.loads(line.decode("utf-8"))
 
             for qa in dialogue['qas']:
                 tokens = tknzr.tokenize(qa['q'])
@@ -41,7 +43,7 @@ def create_vocab(data_dir, data_file, min_occ):
                         word2occ[tok] += 1
 
     for word, occ in word2occ.items():
-        if occ >= min_occ and word.count('.') <= 1: # why dots condition
+        if occ >= min_occ and word.count('.') <= 1:
             word2i[word] = len(word2i)
 
     i2word = {v:k for k,v in word2i.items()}

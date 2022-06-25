@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import random
 
@@ -51,11 +52,11 @@ class N2NDataset(Dataset):
             )
 
         if self.data_args['my_cpu']:
-            if not os.path.isfile(os.path.join(self.data_args['data_dir'], 'subset_'+split+'.json')):
+            if not os.path.isfile(os.path.join(self.data_args['data_dir'], 'subset_'+data_file_name)):
                 create_subset(data_dir=self.data_args['data_dir'], dataset_file_name=data_file_name, split=split)
 
         if self.data_args['my_cpu']:
-            with open(os.path.join(self.data_args['data_dir'], 'subset_'+split+'.json'), 'r') as f:
+            with open(os.path.join(self.data_args['data_dir'], 'subset_'+data_file_name), 'r') as f:
                 self.n2n_data = json.load(f)
         else:
             with open(os.path.join(self.data_args['data_dir'], data_file_name), 'r') as f:
@@ -98,7 +99,6 @@ class N2NDataset(Dataset):
     def __getitem__(self, idx):
         if not type(idx) == str:
             idx = str(idx)
-
         # Load image features
         image_file = self.n2n_data[idx]['image_file']
         visual_feat_id = self.vf_mapping[image_file]
