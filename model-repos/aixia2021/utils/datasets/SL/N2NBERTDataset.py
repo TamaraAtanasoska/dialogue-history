@@ -8,7 +8,7 @@ import numpy as np
 from torch.utils.data import Dataset
 
 
-# from utils.datasets.SL.prepro_lxmert import create_data_file
+from utils.datasets.SL.prepro_lxmert import create_data_file
 
 
 class N2NBERTDataset(Dataset):

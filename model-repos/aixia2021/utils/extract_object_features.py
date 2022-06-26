@@ -50,10 +50,11 @@ if __name__ == "__main__":
     for game_index, game in enumerate(games):
         print("\rProcessing image [{}/{}]".format(game_index, len(games)), end="")
 
-        image = Image.open(os.path.join(args.image_dir, game["image"]["file_name"])).convert("RGB")
-        game_id2pos[str(game["id"])] = game_index
+        image = Image.open(os.path.join(args.image_dir, game["picture"]["file_name"])).convert("RGB")
+        game_id2pos[str(game["dialogue_id"])] = game_index
 
-        for object_index, object in enumerate(game["objects"]):
+        for object_index, object_id in enumerate(game["objects"]):
+            object = game["objects"][object_id]
             bbox = object["bbox"]
             cropped_image = image.crop((bbox[0], bbox[1], bbox[0] + bbox[2], bbox[1] + bbox[3]))
             cropped_image_tensor = transform(cropped_image)

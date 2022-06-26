@@ -8,6 +8,7 @@ import torch
 from utils.config import load_config
 
 # from utils.vocab import create_vocab
+from utils.vocab import create_vocab
 
 use_cuda = torch.cuda.is_available()
 

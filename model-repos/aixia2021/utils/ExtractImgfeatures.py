@@ -7,14 +7,14 @@ import numpy as np
 import torch
 from PIL import Image
 from torchvision import transforms
-from train.N2N.utils import to_var
+
 
 from models.CNN import ResNet
+from utils.wrap_var import to_var
 
 
-def extract_features(split, img_dir, model, my_cpu = False):
+def extract_features(img_dir, model, img_list, my_cpu = False):
 
-    img_list = listdir(img_dir+split+'/')
 
     transform = transforms.Compose([
             transforms.Resize(256),
@@ -29,11 +29,11 @@ def extract_features(split, img_dir, model, my_cpu = False):
         avg_img_features = np.zeros((len(img_list), 2048))
 
     name2id = dict()
-
+    print('creating features ....')
     for i in range(len(img_list)):
         if i>=5 and my_cpu:
             break
-        ImgTensor = transform(Image.open(img_dir+split+'/'+img_list[i]).convert('RGB'))
+        ImgTensor = transform(Image.open(img_dir+img_list[i]).convert('RGB'))
         ImgTensor = to_var(ImgTensor.view(1,3,224,224))
         conv_features, feat = model(ImgTensor)
         avg_img_features[i] = feat.cpu().data.numpy()
@@ -45,15 +45,25 @@ def extract_features(split, img_dir, model, my_cpu = False):
 if __name__ == '__main__':
     start = time()
     print('Start')
-    splits = ['train','val', 'test']
+    splits = ['train','val']
 
-    my_cpu = True
+    my_cpu = False
     # TODO: Remove these hard coded parts
     if my_cpu:
         img_dir = '/home/aashigpu/TEST_CARTESIUS/avenkate/N2N/data/'
     else:
-        img_dir = '/home/aashish/Documents/ProjectAI/data/GuessWhat/'
+        img_dir = 'data/images/'
 
+    with open('data/n2n_train_successful_data.json', 'r') as file_v:
+        n2n_data = json.load(file_v)
+    images = {'train': [],'val':[]}
+    for k, v in n2n_data.items():
+        images['train'].append(v['image_file'])
+
+    with open('data/n2n_val_successful_data.json', 'r') as file_v:
+        n2n_data = json.load(file_v)
+    for k, v in n2n_data.items():
+        images['val'].append(v['image_file'])
     model = ResNet()
     model = model.eval()
     if torch.cuda.is_available():
@@ -63,7 +73,7 @@ if __name__ == '__main__':
     json_data = dict()
     for split in splits:
         print(split)
-        avg_img_features, name2id = extract_features(split, img_dir, model, my_cpu)
+        avg_img_features, name2id = extract_features(img_dir, model, img_list=images[split], my_cpu=my_cpu)
         feat_h5_file.create_dataset(name=split+'_img_features', dtype='float32', data=avg_img_features)
         json_data[split+'2id'] = name2id
     feat_h5_file.close()

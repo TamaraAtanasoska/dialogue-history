@@ -39,11 +39,11 @@ class N2NResNetDataset(Dataset):
             )
 
         if self.data_args['my_cpu']:
-            if not os.path.isfile(os.path.join(self.data_args['data_dir'], 'subset_'+split+'.json')):
+            if not os.path.isfile(os.path.join(self.data_args['data_dir'], 'subset_'+data_file_name)):
                 create_subset(data_dir=self.data_args['data_dir'], dataset_file_name=data_file_name, split=split)
 
         if self.data_args['my_cpu']:
-            with open(os.path.join(self.data_args['data_dir'], 'subset_'+split+'.json'), 'r') as f:
+            with open(os.path.join(self.data_args['data_dir'], 'subset_'+data_file_name), 'r') as f:
                 self.n2n_data = json.load(f)
         else:
             with open(os.path.join(self.data_args['data_dir'], data_file_name), 'r') as f:

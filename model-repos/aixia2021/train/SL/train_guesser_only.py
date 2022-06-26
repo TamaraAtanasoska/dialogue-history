@@ -35,16 +35,23 @@ if __name__ == '__main__':
     parser.add_argument('-modulo', type=int, default=1, help='This flag will cause the guesser to be updated every modulo number of epochs')
     parser.add_argument('-no_decider', action='store_true', help='This flag will cause the decider to be turned off')
     parser.add_argument("-num_turns", type=int, default=None)
+    parser.add_argument("-ckpt", type=str, help='path to stored checkpoint', default=None)
 
     args = parser.parse_args()
     print(args.exp_name)
 
+
+    device = torch.device('cuda:0')  if use_cuda else torch.device('cpu')
+
     ensemble_args, dataset_args, optimizer_args, exp_config = preprocess_config(args)
 
     if exp_config['save_models']:
-        model_dir = exp_config['save_models_path'] + args.bin_name + exp_config['ts'] + '/'
-        if not os.path.isdir(model_dir):
-            os.makedirs(model_dir)
+        if args.ckpt is not None:
+            model_dir = os.path.dirname(args.ckpt)
+        else:
+            model_dir = exp_config['save_models_path'] + args.bin_name + exp_config['ts'] + '/'
+            if not os.path.isdir(model_dir):
+                os.makedirs(model_dir)
         # Copying config file for book keeping
         copy2(args.config, model_dir)
         with open(model_dir+'args.json', 'w') as f:
@@ -57,12 +64,22 @@ if __name__ == '__main__':
 
     # Init model
     model = EnsembleGuesserOnly(**ensemble_args)
-    # TODO Checkpoint loading
-
     if use_cuda:
         model.cuda()
         model = DataParallel(model)
     print(model)
+    optimizer = optim.Adam(model.parameters(), optimizer_args['lr'])
+    # TODO Checkpoint loading
+    if args.ckpt is not None:
+        checkpoint = torch.load(args.ckpt, map_location=device)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        start_e = checkpoint['epoch'] + 1
+        loss = checkpoint['loss']
+    else:
+        start_e = 0
+        loss = 0
+
 
     if args.resnet:
         cnn = ResNet()
@@ -90,8 +107,6 @@ if __name__ == '__main__':
         dataset_train = N2NDataset(split='train', **dataset_args, complete_only=True, num_turns=args.num_turns)
         dataset_val = N2NDataset(split='val', **dataset_args, complete_only=True, num_turns=args.num_turns)
 
-    optimizer = optim.Adam(model.parameters(), optimizer_args['lr'])
-
     if exp_config['logging']:
         exp_config['model_name'] = 'ensemble'
         exp_config['model'] = str(model)
@@ -100,7 +115,7 @@ if __name__ == '__main__':
         exp_config['modulo'] = True if args.modulo>1 else False
         visualise = Visualise(**exp_config)
 
-    for epoch in range(optimizer_args['no_epochs']):
+    for epoch in range(start_e, optimizer_args['no_epochs']):
         start = time()
         print('epoch', epoch)
 
@@ -238,7 +253,12 @@ if __name__ == '__main__':
 
         if exp_config['save_models']:
             model_file = os.path.join(model_dir, ''.join(['model_ensemble_', args.bin_name,'_E_', str(epoch)]))
-            torch.save(model.state_dict(), model_file)
+            torch.save({
+            'epoch': epoch,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'loss': loss,
+            }, model_file)
 
         print('Epoch %03d, Time taken %.3f, Total Training Loss %.4f, Total Validation Loss %.4f'%(epoch, time()-start, torch.mean(train_total_loss), torch.mean(val_total_loss)))
         print('Validation Loss:: QGen %.3f, Decider %.3f, Guesser %.3f'%(torch.mean(val_qgen_loss), torch.mean(val_decision_loss), torch.mean(val_guesser_loss)))

@@ -44,7 +44,7 @@
   "optimizer": {
     "lr": 0.0001,
     "no_epochs": 100,
-    "batch_size": 64
+    "batch_size": 32
   },
 
   "exp_config": {
@@ -68,11 +68,12 @@
     "max_no_qs" : 10,
     "successful_only":true,
     "new_vocab": false,
-    "min_occ": 3
+    "min_occ": 3,
+    "with_objects_feat": true
   },
 
   "data_paths": {
-    "image_path":"./data/GuessWhat/",
+    "image_path":"data/img/raw/",
     "train": "guesswhat.train.jsonl.gz",
     "val": "guesswhat.valid.jsonl.gz",
     "test":"guesswhat.test.jsonl.gz",
@@ -87,8 +88,8 @@
    "ResNet": {
       "image_features": "ResNet_avg_image_features.h5",
       "img2id": "ResNet_avg_image_features2id.json",
-      "objects_features": "objects_features_test.h5",
-      "objects_features_index": "objects_features_index_test.json"
+      "objects_features": "objects_features_example.h5",
+      "objects_features_index": "objects_features_index_example.json"
     }
   }
 }

@@ -35,18 +35,23 @@ if __name__ == '__main__':
     parser.add_argument("-resnet", action='store_true', help='This flag will cause the program to use the image features from the ResNet forward pass instead of the precomputed ones.')
     parser.add_argument("-modulo", type=int, default=1, help='This flag will cause the guesser to be updated every modulo number of epochs')
     parser.add_argument("-no_decider", action='store_true', help='This flag will cause the decider to be turned off')
-    parser.add_argument("-from_scratch", type=bool, default=True)
+    parser.add_argument("-from_scratch", type=bool, default=False)
+    parser.add_argument("-num_turns", type=int, default=None)
+    parser.add_argument("-ckpt", type=str, help='path to stored checkpoint', default=None)
 
     args = parser.parse_args()
     print(args.exp_name)
-
+    device = torch.device('cuda:0') if use_cuda else torch.device('cpu')
     # Load the Arguments and Hyperparamters
     ensemble_args, dataset_args, optimizer_args, exp_config = preprocess_config(args)
 
     if exp_config['save_models']:
-        model_dir = exp_config['save_models_path'] + args.bin_name + exp_config['ts'] + '/'
-        if not os.path.isdir(model_dir):
-            os.makedirs(model_dir)
+        if args.ckpt is not None:
+            model_dir = os.path.dirname(args.ckpt)
+        else:
+            model_dir = exp_config['save_models_path'] + args.bin_name + exp_config['ts'] + '/'
+            if not os.path.isdir(model_dir):
+                os.makedirs(model_dir)
         # Copying config file for book keeping
         copy2(args.config, model_dir)
         with open(model_dir+'args.json', 'w') as f:
@@ -65,7 +70,6 @@ if __name__ == '__main__':
         model.cuda()
         model = DataParallel(model)
     print(model)
-
     if args.resnet:
         cnn = ResNet()
 
@@ -84,8 +88,8 @@ if __name__ == '__main__':
     # For QGen.
     _cross_entropy = nn.CrossEntropyLoss(ignore_index=0)
 
-    dataset_train = N2NBERTDataset(split='train', add_sep=False, complete_only=True, **dataset_args)
-    dataset_val = N2NBERTDataset(split='val', add_sep=False, complete_only=True, **dataset_args)
+    dataset_train = N2NBERTDataset(split='train', add_sep=False, complete_only=True, **dataset_args, num_turns=args.num_turns)
+    dataset_val = N2NBERTDataset(split='val', add_sep=False, complete_only=True, **dataset_args, num_turns=args.num_turns)
 
     # TODO Use different optimizers for different modules if required.
     num_batches_per_epoch = len(dataset_train) // optimizer_args['batch_size']
@@ -93,6 +97,16 @@ if __name__ == '__main__':
     print("Number of batches per epoch: {}".format(num_batches_per_epoch))
     print("Total number of batches: {}".format(num_total_batches))
     optimizer = BertAdam(model.parameters(), lr=optimizer_args['lr'], warmup=0.1, t_total=num_total_batches)
+    # TODO Checkpoint loading
+    if args.ckpt is not None:
+        checkpoint = torch.load(args.ckpt, map_location=device)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        start_e = checkpoint['epoch'] + 1
+        loss = checkpoint['loss']
+    else:
+        start_e = 0
+        loss = 0
 
     if exp_config['logging']:
         exp_config['model_name'] = 'ensemble'
@@ -102,7 +116,7 @@ if __name__ == '__main__':
         exp_config['modulo'] = True if args.modulo>1 else False
         visualise = Visualise(**exp_config)
 
-    for epoch in range(optimizer_args['no_epochs']):
+    for epoch in range(start_e, optimizer_args['no_epochs']):
         start = time()
         print('epoch', epoch)
 
@@ -260,7 +274,12 @@ if __name__ == '__main__':
         #  and (epoch%args.modulo == 0)
         if exp_config['save_models']:
             model_file = os.path.join(model_dir, ''.join(['model_ensemble_', args.bin_name,'_E_', str(epoch)]))
-            torch.save(model.state_dict(), model_file)
+            torch.save({
+                'epoch': epoch,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'loss': loss,
+            }, model_file)
 
         if epoch%args.modulo != 0:
             print("Epoch %03d, Time taken %.3f, Total Training Loss %.4f, Total Validation Loss %.4f"%(epoch, time()-start, torch.mean(train_total_loss), torch.mean(val_total_loss)))
@@ -271,11 +290,13 @@ if __name__ == '__main__':
                 %(epoch, time()-start, torch.mean(train_total_loss), torch.mean(val_total_loss)))
             print("Training Loss:: QGen %.3f, Decider %.3f, Guesser %.3f"%(torch.mean(train_qgen_loss), torch.mean(train_decision_loss), torch.mean(train_guesser_loss)))
             print("Validation Loss:: QGen %.3f, Decider %.3f, Guesser %.3f"%(torch.mean(val_qgen_loss), torch.mean(val_decision_loss), torch.mean(val_guesser_loss)))
-            print("Training Accuracy:: Ask %.3f, Guess  %.3f, Guesser %.3f"%(np.mean(training_ask_accuracy), np.mean(training_guess_accuracy), np.mean(training_guesser_accuracy)))
-            print("Validation Accuracy:: Ask %.3f, Guess  %.3f, Guesser %.3f"%(np.mean(validation_ask_accuracy), np.mean(validation_guess_accuracy), np.mean(validation_guesser_accuracy)))
+            print('Training Accuracy:: Guess  %.3f, Guesser %.3f' % (
+            torch.mean(torch.stack(training_guess_accuracy)), torch.mean(torch.tensor(training_guesser_accuracy))))
+            print('Validation Accuracy:: Guess  %.3f, Guesser %.3f' % (
+            torch.mean(torch.stack(validation_guess_accuracy)), torch.mean(torch.tensor(validation_guesser_accuracy))))
 
-            if exp_config['save_models']:
-                print("Saved model to %s" % (model_file))
+        if exp_config['save_models']:
+            print("Saved model to %s" % (model_file))
         print('-----------------------------------------------------------------')
         if exp_config['logging']:
             visualise.epoch_update(
@@ -283,16 +304,16 @@ if __name__ == '__main__':
                 train_qgen_loss=torch.mean(train_qgen_loss),
                 train_guesser_loss=0 if (epoch%args.modulo != 0) else torch.mean(train_guesser_loss),
                 train_decider_loss=torch.mean(train_decision_loss),
-                train_ask_accuracy=np.mean(training_ask_accuracy),
-                train_guess_accuracy=np.mean(training_guess_accuracy),
-                train_guesser_accuracy=0 if (epoch%args.modulo != 0) else np.mean(training_guesser_accuracy),
+                train_ask_accuracy=ask_accuracy,
+                train_guess_accuracy=torch.mean(torch.stack(training_guess_accuracy)),
+                train_guesser_accuracy=0 if (epoch%args.modulo != 0) else torch.mean(torch.tensor(training_guesser_accuracy)),
                 valid_loss=torch.mean(val_total_loss),
                 valid_qgen_loss=torch.mean(val_qgen_loss),
                 valid_guesser_loss=0 if (epoch%args.modulo != 0) else torch.mean(val_guesser_loss),
                 valid_decider_loss=torch.mean(val_decision_loss),
-                valid_ask_accuracy=np.mean(validation_ask_accuracy),
-                valid_guess_accuracy=np.mean(validation_guess_accuracy),
-                valid_guesser_accuracy=0 if (epoch%args.modulo != 0) else np.mean(validation_guesser_accuracy),
+                valid_ask_accuracy=ask_accuracy,
+                valid_guess_accuracy=torch.mean(torch.stack(validation_guess_accuracy)),
+                valid_guesser_accuracy=0 if (epoch%args.modulo != 0) else torch.mean(torch.tensor(validation_guesser_accuracy)),
                 epoch=epoch,
                 modulo=args.modulo
             )

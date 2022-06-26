@@ -1,0 +1,17 @@
+# conda create -n vli python=3.9
+# install pytorch based on the system config
+# we have CUDA 11.3 so we install pytorch using following command:
+# pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
+# Find your appropriate installation from here: https://pytorch.org/get-started/locally/
+
+h5py==3.7
+nltk==3.7
+numpy==1.22
+argparse==1.4
+datetime==4.4
+#multiprocessing
+#time
+#shutil
+#json
+tensorboardX==2.5
+transformers==4.20
