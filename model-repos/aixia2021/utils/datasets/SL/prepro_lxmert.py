@@ -87,15 +87,15 @@ def create_data_file(data_dir, data_file, data_args, vocab_file_name, split='tra
             target = int()
             target_cat = int()
             for i, o in enumerate(game['objects']):
-                objects.append(o['category_id'])
-                object_ids.append(o['id'])
-                spatials.append(get_spatial_feat(bbox=o['bbox'], im_width=game['image']['width'], im_height=game['image']['height']))
+                object = game['objects'][o]
+                objects.append(object['category_id'])
+                object_ids.append(object['object_id'])
+                spatials.append(get_spatial_feat(bbox=object['bbox'], im_width=game['picture']['width'], im_height=game['picture']['height']))
 
-                if o['id'] == game['object_id']:
+                if object['object_id'] == game['object_id']:
                     target = i
-                    target_cat = o['category_id']
-                    bboxes.append(o['bbox'])
-
+                    target_cat = object['category_id']
+                    bboxes.append(object['bbox'])
             # pad objects, spatials and bboxes
             objects.extend([category_pad_token] * (max_no_objects - len(objects)))
             object_ids.extend([0] * (max_no_objects - len(object_ids)))
@@ -118,9 +118,9 @@ def create_data_file(data_dir, data_file, data_args, vocab_file_name, split='tra
                     src = [word2i[start]]
                 src_lengths.append(len(src))
 
-                q_tokens = tknzr.tokenize(qa['question'])
-                answer = qa['answer']
-                target_q_raw = qa['question']
+                q_tokens = tknzr.tokenize(qa['q'])
+                answer = qa['a']
+                target_q_raw = qa['q']
 
                 target_q = [word2i[w] if w in word2i else word2i['<unk>'] for w in q_tokens]
                 src_q = [word2i[start]] + [word2i[w] if w in word2i else word2i['<unk>'] for w in q_tokens]
@@ -151,9 +151,9 @@ def create_data_file(data_dir, data_file, data_args, vocab_file_name, split='tra
                 n2n_data[_id]['target_obj'] = target
                 n2n_data[_id]['target_cat'] = target_cat
                 n2n_data[_id]['bboxes'] = bboxes # Change in v2 only target bbox is included as everything is not required
-                n2n_data[_id]['game_id'] = str(game['id'])
-                n2n_data[_id]['image_file'] = game['image']['file_name']
-                n2n_data[_id]['image_url'] = game['image']['coco_url']
+                n2n_data[_id]['game_id'] = str(game['dialogue_id'])
+                n2n_data[_id]['image_file'] = game['picture']['file_name']
+                n2n_data[_id]['image_url'] = game['picture']['coco_url']
                 _id += 1
 
             src_unpad = src[:src.index(word2i['<padding>'])] if word2i['<padding>'] in src else src
@@ -190,9 +190,9 @@ def create_data_file(data_dir, data_file, data_args, vocab_file_name, split='tra
             n2n_data[_id]['target_obj'] = target
             n2n_data[_id]['target_cat'] = target_cat
             n2n_data[_id]['bboxes'] = bboxes  # Change in v2 only target bbox is included as everything is not required
-            n2n_data[_id]['game_id'] = str(game['id'])
-            n2n_data[_id]['image_file'] = game['image']['file_name']
-            n2n_data[_id]['image_url'] = game['image']['coco_url']
+            n2n_data[_id]['game_id'] = str(game['dialogue_id'])
+            n2n_data[_id]['image_file'] = game['picture']['file_name']
+            n2n_data[_id]['image_url'] = game['picture']['coco_url']
             _id += 1
 
     n2n_data_path = os.path.join(data_dir, data_file_name)

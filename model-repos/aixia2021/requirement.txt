@@ -14,3 +14,4 @@ datetime==4.4
 #shutil
 #json
 tensorboardX==2.5
+transformers==4.20

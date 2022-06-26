@@ -108,12 +108,62 @@ TODO
 
 ## Training
 
-Train V-LSTM model using following command:
+### Language Models or Blind models
+1. Train LSTM model using following command:
 ```bash
+# Script train_lstm_guesser_only still to be written
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
-python train/SL/train_base.py \
+python train/SL/train_lstm_guesser_only.py \
 -modulo 7 \
 -no_decider \
 -exp_name test \
 -bin_name test
 ```
+
+2. Train Roberta model using following command:
+```bash
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
+python train/SL/train_bert.py \
+-modulo 7 \
+-no_decider \
+-exp_name test \
+-bin_name test
+```
+
+
+### Multimodal
+1. Train V-LSTM
+```bash
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
+python train/SL/train_guesser_only.py \
+-modulo 7 \
+-no_decider \
+-exp_name test \
+-bin_name test
+```
+
+2. Train LXMERT
+
+```bash
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
+python train/SL/train_lxmert_guesser_only.py \
+-modulo 7 \
+-no_decider \
+-exp_name test \
+-bin_name test
+```
+
+
+## Experiments
+
+### No Last Turn
+
+todo : use evaluate_human_accuracy scripts
+
+### Reverse dialogue history
+
+todo : use evaluate_human_accuracy scripts
+
+### Attention distribution
+
+todo : use analyze_attention_by_turn scripts
