@@ -97,7 +97,7 @@ if __name__ == '__main__':
     print("Number of batches per epoch: {}".format(num_batches_per_epoch))
     print("Total number of batches: {}".format(num_total_batches))
     optimizer = BertAdam(model.parameters(), lr=optimizer_args['lr'], warmup=0.1, t_total=num_total_batches)
-    # TODO Checkpoint loading
+
     if args.ckpt is not None:
         checkpoint = torch.load(args.ckpt, map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])
