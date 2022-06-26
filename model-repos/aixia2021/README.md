@@ -107,11 +107,31 @@ python utils/extract_object_features.py \
 TODO
 
 ## Training
+Training scripts are almost same for all four models and most of the parameters
+are same as well. We list common parameters below:
 
+```
+data : Data Directory containing 
+            1. ResNet image and object features,
+            2. guesswhat train, val and test jsons
+            3. mscoco images under img/raw sub directories
+config : Config file
+exp_name : Experiment Name
+bin_name : Name of the trained model file
+my_cpu : To select number of workers for dataloader. 
+         CAUTION: If using your own system then make this True
+breaking : To Break training after 5 batch, for code testing purpose
+resnet : This flag will cause the program to use the image features 
+         from the ResNet forward pass instead of the precomputed ones.   
+modulo : This flag will cause the guesser to be updated every modulo 
+         number of epochs 
+no_decider : This flag will cause the decider to be turned off
+num_turns : Max number of turns allowed in a dialogue
+ckpt : Path to saved checkpoint
+```
 ### Language Models or Blind models
 1. Train LSTM model using following command:
 ```bash
-# Script train_lstm_guesser_only still to be written
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
 python train/SL/train_lstm_guesser_only.py \
 -modulo 7 \
@@ -130,6 +150,8 @@ python train/SL/train_bert.py \
 -bin_name test
 ```
 
+Use parameter `from_scratch` to train BERT model from scratch.
+
 
 ### Multimodal
 1. Train V-LSTM
@@ -145,6 +167,7 @@ python train/SL/train_guesser_only.py \
 2. Train LXMERT
 
 ```bash
+# Cannot be trained, required input files are not available yet
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
 python train/SL/train_lxmert_guesser_only.py \
 -modulo 7 \
@@ -152,7 +175,8 @@ python train/SL/train_lxmert_guesser_only.py \
 -exp_name test \
 -bin_name test
 ```
-
+Use parameter `from_scratch` to train LXMERT model from scratch and `preloaded`
+to use preloaded MS-COCO Bottom-Up features.
 
 ## Experiments
 
