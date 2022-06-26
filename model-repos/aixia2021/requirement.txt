@@ -3,6 +3,7 @@
 # we have CUDA 11.3 so we install pytorch using following command:
 # pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
 # Find your appropriate installation from here: https://pytorch.org/get-started/locally/
+# Install sharearray required by LXMERT model : pip install git+https://github.com/bshillingford/python-sharearray
 
 h5py==3.7
 nltk==3.7
