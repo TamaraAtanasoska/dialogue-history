@@ -51,7 +51,7 @@
 
   "optimizer": {
     "lr": 0.00001,
-    "no_epochs": 25,
+    "no_epochs": 30,
     "batch_size": 16
   },
 
@@ -101,9 +101,9 @@
     "FasterRCNN": {
       "train": "./lxmert/data/mscoco_imgfeat/train2014_obj36.tsv",
       "val": "./lxmert/data/mscoco_imgfeat/val2014_obj36.tsv",
-      "mscoco_bottomup_index": "/mnt/8tera/claudio.greco/guesswhat_lxmert/guesswhat/lxmert/data/mscoco_imgfeat/mscoco_bottomup_info.json",
-      "mscoco_bottomup_features": "/dev/shm/mscoco_bottomup_features.npy",
-      "mscoco_bottomup_boxes": "/mnt/8tera/claudio.greco/guesswhat_lxmert/guesswhat/lxmert/data/mscoco_imgfeat/mscoco_bottomup_boxes.npy"
+      "mscoco_bottomup_index": "data/mscoco_imgfeat/mscoco_bottomup_info.json",
+      "mscoco_bottomup_features": "data/mscoco_imgfeat/mscoco_bottomup_features.npy",
+      "mscoco_bottomup_boxes": "data/mscoco_imgfeat/mscoco_bottomup_boxes.npy"
     }
   }
 }

@@ -28,7 +28,7 @@ use_cuda = torch.cuda.is_available()
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-data_dir", type=str, default="data", help='Data Directory')
-    parser.add_argument("-config", type=str, default="config/SL/config_bert_scratch.json", help='Config file')
+    parser.add_argument("-config", type=str, default="config/SL/config_bert.json", help='Config file')
     parser.add_argument("-exp_name", type=str, help='Experiment Name')
     parser.add_argument("-bin_name", type=str, default='', help='Name of the trained model file')
     parser.add_argument("-my_cpu", action='store_true', help='To select number of workers for dataloader. CAUTION: If using your own system then make this True')
@@ -47,7 +47,8 @@ if __name__ == '__main__':
     ensemble_args, dataset_args, optimizer_args, exp_config = preprocess_config(args)
 
     print("Loading MSCOCO bottomup index from: {}".format(dataset_args["FasterRCNN"]["mscoco_bottomup_index"]))
-    with open(dataset_args["FasterRCNN"]["mscoco_bottomup_index"]) as in_file:
+    mscoco_bottomup_index_path = os.path.exists(os.path.join(os.path.expanduser('~'),dataset_args["FasterRCNN"]["mscoco_bottomup_index"]))
+    with open(mscoco_bottomup_index_path) as in_file:
         mscoco_bottomup_index = json.load(in_file)
         image_id2image_pos = mscoco_bottomup_index["image_id2image_pos"]
         image_pos2image_id = mscoco_bottomup_index["image_pos2image_id"]
@@ -55,22 +56,25 @@ if __name__ == '__main__':
         img_w = mscoco_bottomup_index["img_w"]
 
     print("Loading MSCOCO bottomup features from: {}".format(dataset_args["FasterRCNN"]["mscoco_bottomup_features"]))
+    mscoco_bottomup_features_path = os.path.exists(os.path.join(os.path.expanduser('~'),dataset_args["FasterRCNN"]["mscoco_bottomup_features"]))
     mscoco_bottomup_features = None
     if args.preloaded:
         print("Loading preloaded MS-COCO Bottom-Up features")
         mscoco_bottomup_features = sharearray.cache("mscoco_vectorized_features", lambda: None)
         mscoco_bottomup_features = np.array(mscoco_bottomup_features)
     else:
-        mscoco_bottomup_features = np.load(dataset_args["FasterRCNN"]["mscoco_bottomup_features"])
+        mscoco_bottomup_features = np.load(mscoco_bottomup_features_path)
 
     print("Loading MSCOCO bottomup boxes from: {}".format(dataset_args["FasterRCNN"]["mscoco_bottomup_boxes"]))
+    mscoco_bottomup_boxes_path = os.path.exists(
+        os.path.join(os.path.expanduser('~'), dataset_args["FasterRCNN"]["mscoco_bottomup_boxes"]))
     mscoco_bottomup_boxes = None
     if args.preloaded:
         print("Loading preloaded MS-COCO Bottom-Up boxes")
         mscoco_bottomup_boxes = sharearray.cache("mscoco_vectorized_boxes", lambda: None)
         mscoco_bottomup_boxes = np.array(mscoco_bottomup_boxes)
     else:
-        mscoco_bottomup_boxes = np.load(dataset_args["FasterRCNN"]["mscoco_bottomup_boxes"])
+        mscoco_bottomup_boxes = np.load(mscoco_bottomup_boxes_path)
 
     imgid2fasterRCNNfeatures = {}
     for mscoco_id, mscoco_pos in image_id2image_pos.items():
