@@ -157,7 +157,7 @@ Use parameter `from_scratch` to train BERT model from scratch.
 1. Train V-LSTM
 ```bash
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
-python train/SL/train_guesser_only.py \
+python train/SL/train_vlstm_guesser_only.py \
 -modulo 7 \
 -no_decider \
 -exp_name test \
