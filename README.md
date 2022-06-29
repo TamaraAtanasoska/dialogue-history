@@ -17,10 +17,28 @@ We started our explorations by running the original baseline, and continued to t
 ### Dataset
 
 The GuessWhat?! game uses two datasets: GuessWhat?! dialogues and [MS COCO](https://cocodataset.org/#home) images. 
-The three parts of the GuessWhat?! dataset can be downloaded using the following commands: 
+
+The three parts of the GuessWhat?! dataset(train, validation, test) can be downloaded using the following commands: 
 
 ```
 wget https://florian-strub.com/guesswhat.train.jsonl.gz -P data/
 wget https://florian-strub.com//guesswhat.valid.jsonl.gz -P data/
 wget https://florian-strub.com//guesswhat.test.jsonl.gz -P data/
+```
+
+The MS COCO dataset can be downloaded using the following commands:
+
+```
+wget http://msvocds.blob.core.windows.net/coco2014/train2014.zip -P data/img/
+wget http://msvocds.blob.core.windows.net/coco2014/val2014.zip -P data/img/
+```
+
+To create the correct filenames as expected by the preprocessing script, please unzip and then run the script stated below:
+```
+unzip data/img/train2014.zip -d data/img/raw
+unzip data/img/val2014.zip -d data/img/raw
+
+python src/guesswhat/preprocess_data/rewire_coco_image_id.py \ 
+   -image_dir data/img/raw \
+   -data_out data/img/raw
 ```
