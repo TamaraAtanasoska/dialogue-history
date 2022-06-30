@@ -1,4 +1,4 @@
-# Reproduction project: original GuessWhat?! baseline, GDSE, RoBERTa, LXMBERT
+# Reproduction project: original GuessWhat?! baseline, GDSE, RoBERTa, LXMERT
 
 This reproduction project is part of the assignments for the Language, Vision and Interaction course by [Prof. Dr. Schlangen](https://scholar.google.com/citations?user=QoDgwZYAAAAJ&hl=en) at the University of Potsdam, part of the [Cognitive Systems Masters program](https://www.uni-potsdam.de/de/studium/studienangebot/masterstudium/master-a-z/cognitive-systems).  
 
