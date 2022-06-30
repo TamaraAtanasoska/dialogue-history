@@ -16,19 +16,30 @@ We started our explorations by running the original baseline, and continued to t
 
 In the folder ```setup/``` you can find the respective environment replication and package requrements files. 
 
-You can install all the packages listed in the requirements.txt command using:
-```
-pip install -r setup/<repo-of-choice>/requirements.txt
-```
-If you are using [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) to manage your virtual enviorments, than you can replicate the full exact environments in which we ran the code with the commands below.
+You can either run the ```requirements.txt``` file, or if you are using [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) to manage your virtual enviorments, you can replicate the full exact environments in which we ran the code with the second pair of commands below. 
 
-Original Guesswhat repository: 
+### Original Guesswhat repository: 
 ```
+pip install -r setup/guesswhat/requirements.txt
+
+OR
+
 conda env create --name <name> --file setup/guesswhat/conda.yml python=3.6
 conda source activate <name>
 ```
-Aixia20201: 
+### Aixia20201: 
 ```
+pip install -r setup/aixia2021/requirements.txt
+
+OR
+
+conda env create --name <name> --file setup/aixia2021/conda.yml python=3.9
+conda source activate <name>
+```
+
+In order for the training to run faster, it is recommended to use a GPU. Our setup includes NVIDIA GeForce GTX 1080 Ti with CUDA 11.6 installed and we use following command to install PyTorch. You can find the right Pytorch installation for your usecase [here](https://pytorch.org/get-started/locally/).
+```
+pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
 ```
 
 
@@ -62,7 +73,7 @@ If you would like if any file has been corrupted, you could use the following co
 md5sum $file
 ```
 
-## Running the original GuessWhat model
+### Image features for the orginal GuessWhat model
 
 The scripts below assume that you are already in the model directory at ```model-repos/guesswhat/```.
 
@@ -73,4 +84,5 @@ python src/guesswhat/preprocess_data/rewire_coco_image_id.py \
    -image_dir data/img/raw \
    -data_out data/img/raw
 ```
+
 
