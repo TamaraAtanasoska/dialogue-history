@@ -42,6 +42,8 @@ unzip data/img/val2014.zip -d data/img/raw
 
 ## Running the original GuessWhat model
 
+The scripts below assume that you are already in the model directory at ```model-repos/guesswhat/```.
+
 As a first step, the names of the unzipped image files needs to be changed in a format that the script expects. You can do that by running the following script: 
 
 ```
