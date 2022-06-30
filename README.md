@@ -33,12 +33,20 @@ wget http://msvocds.blob.core.windows.net/coco2014/train2014.zip -P data/img/
 wget http://msvocds.blob.core.windows.net/coco2014/val2014.zip -P data/img/
 ```
 
-To create the correct filenames as expected by the preprocessing script, please unzip and then run the script stated below:
+And unzip to into the ```data/img/raw``` folder. We are preserving the originally proposed folder structure, feel free to change it.  
+
 ```
 unzip data/img/train2014.zip -d data/img/raw
 unzip data/img/val2014.zip -d data/img/raw
+```
 
+## Running the original GuessWhat model
+
+As a first step, the names of the unzipped image files needs to be changed in a format that the script expects. You can do that by running the following script: 
+
+```
 python src/guesswhat/preprocess_data/rewire_coco_image_id.py \ 
    -image_dir data/img/raw \
    -data_out data/img/raw
 ```
+
