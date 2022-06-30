@@ -45,9 +45,11 @@ pip install torch torchvision torchaudio --extra-index-url https://download.pyto
 
 ## Downloading the dataset and acquiring the image features
 
+**Important**: the only shared data between the two repositories are the dialogue jsons that are available using the first commands. The images require different naming, and the image features are generated using different models. As we preserved the project tree structure of both the projects, we expect that each of the repositories have their own data folders with all the data necessary in it.
+
 ### Dataset
 
-The GuessWhat?! game uses two datasets: GuessWhat?! dialogues and [MS COCO](https://cocodataset.org/#home) images. 
+The GuessWhat?! game uses two datasets: GuessWhat?! dialogues and [MS COCO](https://cocodataset.org/#home) images. Before running this commands we assume you are in either of the repositories in ```model-repos/``` already.
 
 The three parts of the GuessWhat?! dataset(train, validation, test) can be downloaded using the following commands: 
 
@@ -57,7 +59,7 @@ wget https://florian-strub.com//guesswhat.valid.jsonl.gz -P data/
 wget https://florian-strub.com//guesswhat.test.jsonl.gz -P data/
 ```
 
-The MS COCO dataset can be downloaded using the first two commands. The second two will help you unzip to into the ```data/img/raw``` folder. We are preserving the originally proposed folder structure, feel free to change it.  
+The MS COCO dataset can be downloaded using the first two commands. The second two will help you unzip to into the ```data/img/raw``` folder. 
 
 ```
 wget http://msvocds.blob.core.windows.net/coco2014/train2014.zip -P data/img/
