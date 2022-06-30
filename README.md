@@ -12,6 +12,11 @@ In [model-repos](model-repos/) directory there are the [guesswhat](model-repos/g
 
 We started our explorations by running the original baseline, and continued to the more recent and improved repository. The code in both cloned repositories is modified to work with the version of the dataset as of June 2022, as well as some other small changes. 
 
+## Setting up the environment and installing the required packages
+
+In the folder ```setup/``` you can find the respective environment replication and package requrements files. 
+
+
 ## Downloading the dataset and acquiring the image features
 
 ### Dataset
