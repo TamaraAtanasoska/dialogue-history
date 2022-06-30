@@ -47,6 +47,21 @@ pip install torch torchvision torchaudio --extra-index-url https://download.pyto
 
 **Important**: the only shared data between the two repositories are the dialogue jsons that are available using the first commands. The images require different naming, and the image features are generated using different models. As we preserved the project tree structure of both the projects, we expect that each of the repositories have their own data folders with all the data necessary in it.
 
+If you decide to follow our code structure, it will look like this:
+
+```
+guesswhat
+├── config         
+├── out            
+├── data                  #the root data folder also contains all the dialogue json files       
+|   └── img       
+|        ├── ft_vgg_img   #image features
+|        ├── ft_vgg_crop  #crop/object image features
+|        └── raw          #contains all the images
+|
+└── src   
+```
+
 ### Dataset
 
 The GuessWhat?! game uses two datasets: GuessWhat?! dialogues and [MS COCO](https://cocodataset.org/#home) images. Before running this commands we assume you are in either of the repositories in ```model-repos/``` already.
@@ -77,7 +92,7 @@ md5sum $file
 
 ### Image features for the orginal GuessWhat model
 
-The scripts below assume that you are already in the model directory at ```model-repos/guesswhat/```.
+The scripts below assume that you are already in the model directory at ```model-repos/guesswhat/```. 
 
 As a first step, the names of the unzipped image files needs to be changed in a format that the script expects. You can do that by running the following script: 
 
