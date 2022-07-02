@@ -212,6 +212,8 @@ python src/guesswhat/train/train_guesser.py \
 
 ### Training the four Guesser models of the Aixia20201 repository
 
+The scripts below assume that you are already in the model directory at ```model-repos/aixia2021/```.
+
 #### Common training parameters between the models
 
 ```
