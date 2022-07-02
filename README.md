@@ -18,7 +18,7 @@ In the folder ```setup/``` you can find the respective environment replication a
 
 You can either run the ```requirements.txt``` file, or if you are using [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) to manage your virtual enviorments, you can replicate the full exact environments in which we ran the code with the second pair of commands below. 
 
-### Original Guesswhat repository: 
+### Original Guesswhat repository
 ```
 pip install -r setup/guesswhat/requirements.txt
 
@@ -27,7 +27,7 @@ OR
 conda env create --name <name> --file setup/guesswhat/conda.yml python=3.6
 conda source activate <name>
 ```
-### Aixia20201: 
+### Aixia20201
 ```
 pip install -r setup/aixia2021/requirements.txt
 
