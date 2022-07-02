@@ -153,6 +153,8 @@ python src/guesswhat/preprocess_data/extract_img_features.py \
 
 ### Image features for the Aixia2021 repository
 
+The scripts below assume that you are already in the model directory at ```model-repos/aixia2021/```.
+
 Unlike the original repository, the Aixia2021 repository uses ResNet features. To run the models, both the image and object features will need to be generated. 
 
 Note: the directory passed to the -img_dir option needs to contain both the train and valid images in the same directory
