@@ -184,3 +184,31 @@ python utils/extract_object_features.py \
 #### LXMERT features
 
 We obtained the LXMERT feature files by contacting the authors. 
+
+
+## Training the Guesser 
+
+### Training the Guesser in the original GuessWhat repository
+
+The scripts below assume that you are already in the model directory at ```model-repos/guesswhat/```. 
+
+Add the current repository to the python path:
+```
+export PYTHONPATH=src:${PYTHONPATH} 
+```
+
+In the [config/guesser/config.json](config/guesser/config.json) file, the input given to the models can be configured, as well as many other training parameters. You can see more information about these configurations [here](https://github.com/TamaraAtanasoska/dialogue-history/tree/main/model-repos/guesswhat/config/guesser).
+
+To start the training run the command under. The training will print training and validation loss and error, and will trigger the testing automatically at the end.
+
+```
+python src/guesswhat/train/train_guesser.py \
+   -data_dir data \
+   -img_dir data/img/ft_vgg_img \
+   -config config/guesser/config.json \
+   -exp_dir out/guesser \
+   -no_thread 2 
+```
+
+### Training the multiple Guesser modules of the Aixia20201 repository
+
