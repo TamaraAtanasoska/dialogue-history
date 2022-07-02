@@ -276,7 +276,7 @@ python train/SL/train_vlstm_guesser_only.py \
 
 ##### LXMERT
 
-To train the model from scratch, add ```-from_scratch```. To use preloaded MS-COCO bottom-Up features add ```preloaded```. 
+To train the model from scratch, add ```-from_scratch```. To use preloaded MS-COCO bottom-Up features add ```-preloaded```. 
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
@@ -286,3 +286,5 @@ python train/SL/train_lxmert_guesser_only.py \
   -exp_name name \
   -bin_name name
 ```
+
+## Experiments 
