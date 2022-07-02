@@ -47,18 +47,19 @@ pip install torch torchvision torchaudio --extra-index-url https://download.pyto
 
 **Important**: the only shared data between the two repositories are the dialogue jsons that are available using the first commands. The images require different naming, and the image features are generated using different models. As we preserved the project tree structure of both the projects, we expect that each of the repositories have their own data folders with all the data necessary in it.
 
-If you decide to follow our code structure, it will look like this:
+If you decide to follow our code structure, it will look like this. The root ```data/``` folder as well as the subfolders in each model repository are populated by many generated files that appear after using the commands descibed in the rest of the generation docs.
 
 ```
 model-repos
 ├── guesswhat
 |   ├── config         
 |   ├── out            
-|   ├── data                  #contains all the dialogue json files + dict/vocab generated file     
-|   |   └── img       
+|   ├── data
+|   |   ├── expriments       #digalogue data for expriements
+|   |   └── img      
 |   |       ├── ft_vgg_img   #image features
 |   |       ├── ft_vgg_crop  #crop/object image features
-|   |       └── raw          #contains all the images
+|   |       └── raw          #all images
 |   |
 |   └── src   
 └── aixia20201
@@ -67,11 +68,11 @@ model-repos
     ├── utils
     ├── bin
     ├── lxmert
-    ├── data                  #contains all the dialogue json files + dict/vocab generated file      
+    ├── data  
+    |   ├── expriments           #digalogue and image feature data for expriements
     |   └── img       
-    |       ├── ft_vgg_img   #image features
-    |       ├── ft_vgg_crop  #crop/object image features
-    |       └── raw          #contains all the images
+    |       ├── mscoco-bottomup  #lxemert features
+    |       └── raw              #all images
     |
     └── train 
 ```
