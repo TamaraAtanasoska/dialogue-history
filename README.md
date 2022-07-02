@@ -210,5 +210,5 @@ python src/guesswhat/train/train_guesser.py \
    -no_thread 2 
 ```
 
-### Training the multiple Guesser modules of the Aixia20201 repository
+### Training the four Guesser models of the Aixia20201 repository
 
