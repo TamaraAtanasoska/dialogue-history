@@ -295,6 +295,6 @@ Although the paper we are replicating features a larger number of experiments an
 
 The script to generate the new data json files is located at [experiments_data_prep.py](experiments_data_prep.py).
 
+After generating new json data files for the expriments, we suggest that you you add the files in a new directory at ```data/expriments/<experiment>```. When training any of the Guesser models, please add the right directory next to the ```-data_dir``` parameter, for example ```-data_dir data/experiments/reverse-history```. This applies to both the original GuessWhat?! repository and the Aixia20201 ensemble. 
 
-
-After generating new json data files for the expriment you are interested in, we suggest that you you add the files in a new directory at ```data/expriments/<experiment>```. When training any of the Guesser models, please add the right directory next to the ```-data_dir``` parameter, for example ```-data_dir data/experiments/reverse-history```. This applies to both the original GuessWhat?! repository and the Aixia20201 ensemble. 
+**Important: for the experiment with the last turn removed for the Aixia2021 models, the ResNet image features will need to be regenerated with the changed json files as input. Please repeat the ResNet features generation steps from the corresponding section above.**
