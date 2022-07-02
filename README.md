@@ -161,7 +161,7 @@ Note: the directory passed to the ```-img_dir``` option needs to contain both th
 
 #### ResNet image features
 ```
-CUDA_VISIBLE_DEVICES=0 PYTHONPATH=<replace with aixia2021 path> \
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
 python utils/ExtractImgfeatures.py \
   -image_dir data/img/raw \
   -n2n_train_set data/n2n_train_successful_data.json \
@@ -172,7 +172,7 @@ python utils/ExtractImgfeatures.py \
 
 #### ResNet object features
 ```
-CUDA_VISIBLE_DEVICES=0 PYTHONPATH=<replace with aixia2021 path> \
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
 python utils/extract_object_features.py \
   -image_dir data/img/raw \
   -training_set data/guesswhat.train.jsonl.gz \
@@ -212,3 +212,78 @@ python src/guesswhat/train/train_guesser.py \
 
 ### Training the four Guesser models of the Aixia20201 repository
 
+#### Common training parameters between the models
+
+```
+data : Data Directory containing 
+            1. ResNet image and object features,
+            2. guesswhat train, val and test jsons
+            3. mscoco images under img/raw sub directories
+config : Config file
+exp_name : Experiment Name
+bin_name : Name of the trained model file
+my_cpu : To select number of workers for dataloader. 
+         CAUTION: If using your own system then make this True
+breaking : To Break training after 5 batch, for code testing purpose
+resnet : This flag will cause the program to use the image features 
+         from the ResNet forward pass instead of the precomputed ones.   
+modulo : This flag will cause the guesser to be updated every modulo 
+         number of epochs 
+no_decider : This flag will cause the decider to be turned off
+num_turns : Max number of turns allowed in a dialogue
+ckpt : Path to saved checkpoint
+```
+
+#### Language/Blind models
+
+##### Bling LSTM model
+The orignal GuessWhat!? mode that is featured in the orginal repo is part of the Aixia2021 ensamble as well. To train it, please use: 
+
+```bash
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
+python train/SL/train_lstm_guesser_only.py \
+-modulo 7 \
+-no_decider \
+-exp_name name \
+-bin_name name
+```
+
+##### Blind Transformer Model - RoBERTa
+
+To train the model from scratch, add ```-from_scratch```.
+
+```bash
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
+python train/SL/train_bert.py \
+-modulo 7 \
+-no_decider \
+-exp_name name \
+-bin_name name
+```
+
+#### Multimodal models
+
+##### GDSE 
+
+```bash
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
+python train/SL/train_vlstm_guesser_only.py \
+-modulo 7 \
+-no_decider \
+-exp_name name \
+-bin_name name
+```
+
+##### LXMERT
+
+To train the model from scratch, add ```-from_scratch```. To use preloaded MS-COCO bottom-Up features add ```preloaded```. 
+
+```bash
+# Cannot be trained, required input files are not available yet
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
+python train/SL/train_lxmert_guesser_only.py \
+-modulo 7 \
+-no_decider \
+-exp_name name \
+-bin_name name
+```
