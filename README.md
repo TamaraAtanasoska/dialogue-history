@@ -150,3 +150,31 @@ python src/guesswhat/preprocess_data/extract_img_features.py \
    -feature_name fc8 \
    -mode $mode
 ```
+
+### Image features for the Aixia2021 repository
+
+Unlike the original repository, the Aixia2021 repository uses ResNet features. To run the models, both the image and object features will need to be generated. 
+
+Note: the directory passed to the -img_dir option needs to contain both the train and valid images in the same directory
+
+#### ResNet image features
+```bash
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=<base folder path> \
+python utils/ExtractImgfeatures.py \
+  -image_dir data/img/raw \
+  -n2n_train_set data/n2n_train_successful_data.json \
+  -n2n_val_set data/n2n_val_successful_data.json \
+  -image_features_json_path data/ResNet_avg_image_features2id.json \
+  -image_features_path data/ResNet_avg_image_features.h5
+```
+
+#### ResNet object features
+```bash
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=<base folder path> \
+python utils/extract_object_features.py \
+  -image_dir data/img/raw \
+  -training_set data/guesswhat.train.jsonl.gz \
+  -validation_set data/guesswhat.valid.jsonl.gz \
+  -objects_features_index_path data/objects_features_index_example.json \
+  -objects_features_path data/objects_features_example.h5
+```
