@@ -293,3 +293,8 @@ python train/SL/train_lxmert_guesser_only.py \
 
 Although the paper we are replicating features a larger number of experiments and they are overall more granuated, we focused on exploring the effect of removing the last turn, and the effect of reversing the history. You can read more about the expriements in the [paper](https://github.com/TamaraAtanasoska/dialogue-history/blob/main/project-docs/Greco%2C%20Testoni%2C%20Bernardi_2020.pdf) discussion sections.
 
+The script to generate the new data json files is located at [experiments_data_prep.py](experiments_data_prep.py).
+
+
+
+After generating new json data files for the expriment you are interested in, we suggest that you you add the files in a new directory at ```data/expriments/<experiment>```. When training any of the Guesser models, please add the right directory next to the ```-data_dir``` parameter, for example ```-data_dir data/experiments/reverse-history```. This applies to both the original GuessWhat?! repository and the Aixia20201 ensemble. 
