@@ -197,7 +197,7 @@ Add the current repository to the python path:
 export PYTHONPATH=src:${PYTHONPATH} 
 ```
 
-For the next step you need to generate the dictionary:
+Create the dictionary: 
 ```
 python src/guesswhat/preprocess_data/create_dictionary.py -data_dir data -dict_file dict.json -min_occ 3
 ```
