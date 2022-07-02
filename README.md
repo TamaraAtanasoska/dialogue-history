@@ -42,6 +42,10 @@ In order for the training to run faster, it is recommended to use a GPU. Our set
 pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
 ```
 
+If you are having protobuf versioning errors, please use the following command:
+```
+pip3 install --upgrade protobuf==3.20.0
+```
 
 ## Downloading the dataset and acquiring the image features
 
