@@ -157,7 +157,7 @@ The scripts below assume that you are already in the model directory at ```model
 
 Unlike the original repository, the Aixia2021 repository uses ResNet features. To run the models, both the image and object features will need to be generated. 
 
-Note: the directory passed to the ```-img_dir``` option needs to contain both the train and valid images in the same directory
+Note: the directory passed to the ```-img_dir``` option needs to contain both the train and valid images in the same directory.
 
 #### ResNet image features
 ```
