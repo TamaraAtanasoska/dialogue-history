@@ -197,6 +197,11 @@ Add the current repository to the python path:
 export PYTHONPATH=src:${PYTHONPATH} 
 ```
 
+For the next step you need to generate the dictionary:
+```
+python src/guesswhat/preprocess_data/create_dictionary.py -data_dir data -dict_file dict.json -min_occ 3
+```
+
 In the [config/guesser/config.json](config/guesser/config.json) file, the input given to the models can be configured, as well as many other training parameters. You can see more information about these configurations [here](https://github.com/TamaraAtanasoska/dialogue-history/tree/main/model-repos/guesswhat/config/guesser).
 
 To start the training run the command under. The training will print training and validation loss and error, and will trigger the testing automatically at the end.
