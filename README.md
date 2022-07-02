@@ -50,16 +50,30 @@ pip install torch torchvision torchaudio --extra-index-url https://download.pyto
 If you decide to follow our code structure, it will look like this:
 
 ```
-guesswhat
-├── config         
-├── out            
-├── data                  #the root data folder also contains all the dialogue json files       
-|   └── img       
-|        ├── ft_vgg_img   #image features
-|        ├── ft_vgg_crop  #crop/object image features
-|        └── raw          #contains all the images
-|
-└── src   
+model-repos
+├── guesswhat
+|   ├── config         
+|   ├── out            
+|   ├── data                  #contains all the dialogue json files + dict/vocab generated file     
+|   |   └── img       
+|   |       ├── ft_vgg_img   #image features
+|   |       ├── ft_vgg_crop  #crop/object image features
+|   |       └── raw          #contains all the images
+|   |
+|   └── src   
+└── aixia20201
+    ├── config         
+    ├── models
+    ├── utils
+    ├── bin
+    ├── lxmert
+    ├── data                  #contains all the dialogue json files + dict/vocab generated file      
+    |   └── img       
+    |       ├── ft_vgg_img   #image features
+    |       ├── ft_vgg_crop  #crop/object image features
+    |       └── raw          #contains all the images
+    |
+    └── train 
 ```
 
 ### Dataset
