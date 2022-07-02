@@ -181,5 +181,4 @@ python utils/extract_object_features.py \
 
 #### LXMERT features
 
-We obtained the LXMERT feature files by contacting the authors. We suggest the same if you need to obtain them. 
-
+We obtained the LXMERT feature files by contacting the authors. 
