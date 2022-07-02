@@ -250,7 +250,7 @@ python train/SL/train_lstm_guesser_only.py \
   -bin_name name
 ```
 
-##### Blind Transformer Model - RoBERTa
+##### RoBERTa
 
 To train the model from scratch, add ```-from_scratch```.
 
@@ -265,7 +265,7 @@ python train/SL/train_bert.py \
 
 #### Multimodal models
 
-##### GDSE 
+##### GDSE (V-LSTM)
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
