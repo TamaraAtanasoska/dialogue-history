@@ -238,7 +238,7 @@ ckpt : Path to saved checkpoint
 
 #### Language/Blind models
 
-##### Bling LSTM model
+##### Bling LSTM model (inspired by the original GuessWhat?! model)
 The orignal GuessWhat!? mode that is featured in the orginal repo is part of the Aixia2021 ensamble as well. To train it, please use: 
 
 ```bash
@@ -290,3 +290,6 @@ python train/SL/train_lxmert_guesser_only.py \
 ```
 
 ## Experiments 
+
+Although the paper we are replicating features a larger number of experiments and they are overall more granuated, we focused on exploring the effect of removing the last turn, and the effect of reversing the history. You can read more about the expriements in the [paper](https://github.com/TamaraAtanasoska/dialogue-history/blob/main/project-docs/Greco%2C%20Testoni%2C%20Bernardi_2020.pdf) discussion sections.
+
