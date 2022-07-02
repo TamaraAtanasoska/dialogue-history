@@ -42,9 +42,14 @@ In order for the training to run faster, it is recommended to use a GPU. Our set
 pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
 ```
 
-If you are having protobuf versioning errors, please use the following command:
+You might run into protobuf versioning errors. If so, please use the following command:
 ```
 pip3 install --upgrade protobuf==3.20.0
+```
+
+To run the LXMERT model, the following package is necessary as well:
+```
+pip install git+https://github.com/bshillingford/python-sharearray
 ```
 
 ## Downloading the dataset and acquiring the image features
