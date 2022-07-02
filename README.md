@@ -158,8 +158,8 @@ Unlike the original repository, the Aixia2021 repository uses ResNet features. T
 Note: the directory passed to the -img_dir option needs to contain both the train and valid images in the same directory
 
 #### ResNet image features
-```bash
-CUDA_VISIBLE_DEVICES=0 PYTHONPATH=<base folder path> \
+```
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=<replace with aixia2021 path> \
 python utils/ExtractImgfeatures.py \
   -image_dir data/img/raw \
   -n2n_train_set data/n2n_train_successful_data.json \
@@ -169,8 +169,8 @@ python utils/ExtractImgfeatures.py \
 ```
 
 #### ResNet object features
-```bash
-CUDA_VISIBLE_DEVICES=0 PYTHONPATH=<base folder path> \
+```
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=<replace with aixia2021 path> \
 python utils/extract_object_features.py \
   -image_dir data/img/raw \
   -training_set data/guesswhat.train.jsonl.gz \
@@ -178,3 +178,8 @@ python utils/extract_object_features.py \
   -objects_features_index_path data/objects_features_index_example.json \
   -objects_features_path data/objects_features_example.h5
 ```
+
+#### LXMERT features
+
+We obtained the LXMERT feature files by contacting the authors. We suggest the same if you need to obtain them. 
+
