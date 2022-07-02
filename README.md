@@ -55,7 +55,7 @@ model-repos
 |   ├── config         
 |   ├── out            
 |   ├── data
-|   |   ├── expriments       #digalogue data for expriements
+|   |   ├── expriments       #dialogue data for expriements
 |   |   └── img      
 |   |       ├── ft_vgg_img   #image features
 |   |       ├── ft_vgg_crop  #crop/object image features
@@ -69,7 +69,7 @@ model-repos
     ├── bin
     ├── lxmert
     ├── data  
-    |   ├── expriments           #digalogue and image feature data for expriements
+    |   ├── expriments           #dialogue and image feature data for expriements
     |   └── img       
     |       ├── mscoco-bottomup  #lxemert features
     |       └── raw              #all images
