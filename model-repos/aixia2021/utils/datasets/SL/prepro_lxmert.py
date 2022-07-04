@@ -2,6 +2,7 @@ import gzip
 import json
 import os
 
+import argparse
 from nltk.tokenize import TweetTokenizer
 
 from utils.image_utils import get_spatial_feat
@@ -203,10 +204,18 @@ def create_data_file(data_dir, data_file, data_args, vocab_file_name, split='tra
 
 
 if __name__ == '__main__':
-    split = 'val'
-    data_dir = 'data'
-    data_file = 'guesswhat.valid.jsonl.gz'
-    vocab_file = 'vocab.json'
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-data_dir", type=str, default="data/test/experiments/reverse_history",
+                        help='Target Data Directory to store the vocab file')
+    parser.add_argument("-data_file", type=str, default="guesswhat.test.jsonl.gz", help='Guesswhat train data file')
+    parser.add_argument("-vocab_file", type=str, default='vocab.json', help='Vocabulary file')
+    parser.add_argument("-split", type=str, default='test', help='Split name')
+
+    args = parser.parse_args()
+    split = args.split
+    data_dir = args.data_dir
+    data_file = args.data_file
+    vocab_file = args.vocab_file
 
     data_args = {
         'max_src_length': 200,

@@ -102,7 +102,7 @@
       "train": "./lxmert/data/mscoco_imgfeat/train2014_obj36.tsv",
       "val": "./lxmert/data/mscoco_imgfeat/val2014_obj36.tsv",
       "mscoco_bottomup_index": "data/mscoco_imgfeat/mscoco_bottomup_info.json",
-      "mscoco_bottomup_features": "data/mscoco_imgfeat/mscoco_bottomup_features.npy",
+      "mscoco_bottomup_features": "data/mscoco_imgfeat/mscoco_bottomup_features.npz",
       "mscoco_bottomup_boxes": "data/mscoco_imgfeat/mscoco_bottomup_boxes.npy"
     }
   }
