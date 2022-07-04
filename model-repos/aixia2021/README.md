@@ -87,7 +87,7 @@ To get ResNet image feature, run following command:
 # Here image_dir should contain both train and val images in same directory
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
 python utils/ExtractImgfeatures.py \
--image_dir data/images \
+-image_dir data/img/raw \
 -n2n_train_set data/n2n_train_successful_data.json \
 -n2n_val_set data/n2n_val_successful_data.json \
 -image_features_json_path data/ResNet_avg_image_features2id.json \
@@ -100,7 +100,7 @@ To get ResNet object feature, run following command:
 # Here image_dir should contain both train and val images in same directory
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
 python utils/extract_object_features.py \
--image_dir data/images \
+-image_dir data/img/raw \
 -training_set data/guesswhat.train.jsonl.gz \
 -validation_set data/guesswhat.valid.jsonl.gz \
 -objects_features_index_path data/objects_features_index_example.json \
@@ -194,7 +194,7 @@ For no last turn experiment, we remove last turn from each dialogue and
 create new GuessWhat json files for all splits.
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 PYTHONPATH=/project/sync/dh/model-repos/aixia2021/ \
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
 python train/SL/TRAIN_ANY_MODEL.py \
 -no_decider \
 -exp_name model_nlt \
@@ -208,10 +208,66 @@ For reverse dialogue history experiment, we reverse dialogue history and
 create new GuessWhat json files for all splits.
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 PYTHONPATH=/project/sync/dh/model-repos/aixia2021/ \
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER/ \
 python train/SL/TRAIN_ANY_MODEL.py \
 -no_decider \
 -exp_name model_reversed \
 -bin_name model_reversed \
 -data_dir data/experiments/reversed-history
 ```
+
+## Testing
+For testing all the trained models, we need to create testing files using
+test data. We require following files:
+1. guesswhat.test.jsonl.gz
+2. vocab.json
+    ```bash
+   CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER/ \
+   python utils/vocab.py \
+   -data_dir data/test \
+   -data_file guesswhat.test.jsonl.gz
+   ```
+3. n2n_test_successful_data.json
+    ```bash
+   CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER/ \
+   python utils/datasets/SL/prepro.py \ # Change to utils/datasets/SL/prepro_lxmert.py for Transformer based models
+   -data_dir data/test \
+   -data_file guesswhat.test.jsonl.gz \
+   -vocab_file vocab.json \
+   -split test
+   ```
+4. ResNet_avg_image_features.h5 and ResNet_avg_image_features2id.json
+    ```bash
+    # Here image_dir should contain both train and val images in same directory
+    CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
+    python testing/ExtractTestImgfeatures.py \
+    -image_dir data/img/raw \
+    -n2n_test_set data/test/n2n_test_successful_data.json \
+    -image_features_json_path data/test/ResNet_avg_image_features2id.json \
+    -image_features_path data/test/ResNet_avg_image_features.h5
+   ```
+5. objects_features_example.h5 and objects_features_index_example.json
+    ```bash
+    #Here image_dir should contain both train and val images in same directory
+    CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
+    python test/extract_test_object_features.py \
+    -image_dir data/img/raw \
+    -test_set data/guesswhat.test.jsonl.gz \
+    -objects_features_index_path data/test/objects_features_index_example.json \
+    -objects_features_path data/test/objects_features_example.h5
+   ```
+   
+For testing experiments, follow these same steps above to obtain data files
+using the GuessWhat data for respective experiment. 
+
+Once we have all the test files ready we can test models using best model
+checkpoint saved in `bin/SL/MODEL_NAME`
+```bash
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
+python testing/test.py \
+-data_dir data/test \
+-config model_nlt config/SL/config_devries.json \
+-best_ckpt bin/SL/blind_lstm2022_06_27_13_44/model_ensemble_blind_lstm_E_8
+```
+
+
