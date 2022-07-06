@@ -29,10 +29,12 @@ def remove_last_turn_from_dialogues_in_json(folder: str, which_set: str, out_dir
 
 
 def main():
-    # reverse_dialogues_in_json("data", "train", "data/experiments")
-    for data_set in ['train', 'valid', 'test']:
-        reverse_dialogues_in_json("data", data_set, "data/experiments")
-        remove_last_turn_from_dialogues_in_json("data", data_set, "data/experiments")
+    ## uncomment to modify all sets
+#     for data_set in ['train', 'valid', 'test']:        
+#         reverse_dialogues_in_json("data", data_set, "data/experiments")
+#         remove_last_turn_from_dialogues_in_json("data", data_set, "data/experiments")
+    reverse_dialogues_in_json("data", "test", "data/experiments")
+    remove_last_turn_from_dialogues_in_json("data", "test", "data/experiments")
 
 
 if __name__ == '__main__':
