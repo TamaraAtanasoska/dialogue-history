@@ -46,15 +46,14 @@ def extract_features(img_dir, model, img_list, my_cpu = False):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-image_dir", type=str, default="data/images", help="this directory should contain both train and val images")
-    parser.add_argument("-n2n_train_set", type=str, default="data/n2n_train_successful_data.json")
-    parser.add_argument("-n2n_val_set", type=str, default="data/n2n_val_successful_data.json")
-    parser.add_argument("-image_features_json_path", type=str, default="data/ResNet_avg_image_features2id.json")
-    parser.add_argument("-image_features_path", type=str, default="data/ResNet_avg_image_features.h5")
+    parser.add_argument("-image_dir", type=str, default="/home/users/bverma/project/sync/al/data/images", help="this directory should contain both train and val images")
+    parser.add_argument("-n2n_test_set", type=str, default="data/test/experiments/reverse_history/n2n_test_successful_data.json")
+    parser.add_argument("-image_features_json_path", type=str, default="data/test/experiments/reverse_history/ResNet_avg_image_features2id.json")
+    parser.add_argument("-image_features_path", type=str, default="data/test/experiments/reverse_history/ResNet_avg_image_features.h5")
     args = parser.parse_args()
     start = time()
     print('Start')
-    splits = ['train','val']
+    splits = ['test']
 
     my_cpu = False
     # TODO: Remove these hard coded parts
@@ -63,16 +62,12 @@ if __name__ == '__main__':
     else:
         img_dir = 'data/images/'''
 
-    with open(args.n2n_train_set, 'r') as file_v:
+    with open(args.n2n_test_set, 'r') as file_v:
         n2n_data = json.load(file_v)
-    images = {'train': [],'val':[]}
+    images = {'test': []}
     for k, v in n2n_data.items():
-        images['train'].append(v['image_file'])
+        images['test'].append(v['image_file'])
 
-    with open(args.n2n_val_set, 'r') as file_v:
-        n2n_data = json.load(file_v)
-    for k, v in n2n_data.items():
-        images['val'].append(v['image_file'])
 
     model = ResNet()
     model = model.eval()

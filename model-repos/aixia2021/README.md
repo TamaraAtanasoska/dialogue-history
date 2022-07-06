@@ -84,9 +84,14 @@ created on the go, so we create them separately before training.
 ### ResNet image features
 To get ResNet image feature, run following command:
 ```bash
-# Image directory is hard coded in the script
+# Here image_dir should contain both train and val images in same directory
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
-python utils/ExtractImgfeatures.py
+python utils/ExtractImgfeatures.py \
+-image_dir data/img/raw \
+-n2n_train_set data/n2n_train_successful_data.json \
+-n2n_val_set data/n2n_val_successful_data.json \
+-image_features_json_path data/ResNet_avg_image_features2id.json \
+-image_features_path data/ResNet_avg_image_features.h5
 ```
 
 ### ResNet object features
@@ -180,14 +185,90 @@ to use preloaded MS-COCO Bottom-Up features.
 
 ## Experiments
 
-### No Last Turn
+In order to perform following experiments, we manipulate original GuessWhat
+data using [modify_json.py](model-repos/guesswhat/src/guesswhat/preprocess_data/modify_json.py) 
+script.
+### No Last Turns
 
-todo : use evaluate_human_accuracy scripts
+For no last turn experiment, we remove last turn from each dialogue and 
+create new GuessWhat json files for all splits.
+
+```bash
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
+python train/SL/TRAIN_ANY_MODEL.py \
+-no_decider \
+-exp_name model_nlt \
+-bin_name model_nlt \
+-data_dir data/experiments/no-last-turns
+```
 
 ### Reverse dialogue history
 
-todo : use evaluate_human_accuracy scripts
+For reverse dialogue history experiment, we reverse dialogue history and 
+create new GuessWhat json files for all splits.
 
-### Attention distribution
+```bash
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER/ \
+python train/SL/TRAIN_ANY_MODEL.py \
+-no_decider \
+-exp_name model_reversed \
+-bin_name model_reversed \
+-data_dir data/experiments/reversed-history
+```
 
-todo : use analyze_attention_by_turn scripts
+## Testing
+For testing all the trained models, we need to create testing files using
+test data. We require following files:
+1. guesswhat.test.jsonl.gz
+2. vocab.json
+    ```bash
+   CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER/ \
+   python utils/vocab.py \
+   -data_dir data/test \
+   -data_file guesswhat.test.jsonl.gz
+   ```
+3. n2n_test_successful_data.json
+    ```bash
+   CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER/ \
+   python utils/datasets/SL/prepro.py \ # Change to utils/datasets/SL/prepro_lxmert.py for Transformer based models
+   -data_dir data/test \
+   -data_file guesswhat.test.jsonl.gz \
+   -vocab_file vocab.json \
+   -split test
+   ```
+4. ResNet_avg_image_features.h5 and ResNet_avg_image_features2id.json
+    ```bash
+    # Here image_dir should contain both train and val images in same directory
+    CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
+    python testing/ExtractTestImgfeatures.py \
+    -image_dir data/img/raw \
+    -n2n_test_set data/test/n2n_test_successful_data.json \
+    -image_features_json_path data/test/ResNet_avg_image_features2id.json \
+    -image_features_path data/test/ResNet_avg_image_features.h5
+   ```
+5. objects_features_example.h5 and objects_features_index_example.json
+    ```bash
+    #Here image_dir should contain both train and val images in same directory
+    CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
+    python testing/extract_test_object_features.py \
+    -image_dir data/img/raw \
+    -test_set data/guesswhat.test.jsonl.gz \
+    -objects_features_index_path data/test/objects_features_index_example.json \
+    -objects_features_path data/test/objects_features_example.h5
+   ```
+   
+For testing experiments, follow these same steps above to obtain data files
+using the GuessWhat data for respective experiment. 
+
+Once we have all the test files ready we can test models using best model
+checkpoint saved in `bin/SL/MODEL_NAME`
+```bash
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
+python testing/test_lstm.py \ # test_bert for bert based model
+-data_dir data/test \
+-config config/SL/config_devries.json \
+-best_ckpt bin/SL/blind_lstm2022_06_27_13_44/model_ensemble_blind_lstm_E_8 \
+-model_type blind # or visual
+```
+
+

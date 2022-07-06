@@ -19,7 +19,8 @@ from train.SL.vis import Visualise
 from utils.datasets.SL.N2NDataset import N2NDataset
 from utils.eval import calculate_accuracy
 from utils.wrap_var import to_var
-
+import wandb
+wandb.init(project="lv", entity="we")
 # TODO Make this capitalised everywhere to inform it is a global variable
 use_cuda = torch.cuda.is_available()
 
@@ -264,7 +265,11 @@ if __name__ == '__main__':
         print('Validation Loss:: QGen %.3f, Decider %.3f, Guesser %.3f'%(torch.mean(val_qgen_loss), torch.mean(val_decision_loss), torch.mean(val_guesser_loss)))
         print('Training Accuracy:: Guess  %.3f, Guesser %.3f'%(np.mean(training_guess_accuracy), np.mean(training_guesser_accuracy)))
         print('Validation Accuracy:: Guess  %.3f, Guesser %.3f'%(np.mean(validation_guess_accuracy), np.mean(validation_guesser_accuracy)))
-
+        wandb.log({'Guesser Training Loss': torch.mean(train_guesser_loss),
+                   'Guesser Validation Loss': torch.mean(val_guesser_loss),
+                   'Guesser Training Accuracy': torch.mean(torch.tensor(training_guesser_accuracy)),
+                   'Guesser Validation Accuracy': torch.mean(torch.tensor(validation_guesser_accuracy)),
+                   })
         if exp_config['save_models']:
             print('Saved model to %s' % (model_file))
 

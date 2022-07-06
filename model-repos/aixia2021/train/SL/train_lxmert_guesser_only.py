@@ -22,6 +22,8 @@ from utils.datasets.SL.N2NLXMERTDataset import N2NLXMERTDataset
 from utils.eval import calculate_accuracy
 from utils.wrap_var import to_var
 
+import wandb
+wandb.init(project="lv", entity="we")
 # TODO Make this capitalised everywhere to inform it is a global variable
 use_cuda = torch.cuda.is_available()
 
@@ -47,7 +49,7 @@ if __name__ == '__main__':
     ensemble_args, dataset_args, optimizer_args, exp_config = preprocess_config(args)
 
     print("Loading MSCOCO bottomup index from: {}".format(dataset_args["FasterRCNN"]["mscoco_bottomup_index"]))
-    mscoco_bottomup_index_path = os.path.exists(os.path.join(os.path.expanduser('~'),dataset_args["FasterRCNN"]["mscoco_bottomup_index"]))
+    mscoco_bottomup_index_path = os.path.join(os.path.expanduser('~'),dataset_args["FasterRCNN"]["mscoco_bottomup_index"])
     with open(mscoco_bottomup_index_path) as in_file:
         mscoco_bottomup_index = json.load(in_file)
         image_id2image_pos = mscoco_bottomup_index["image_id2image_pos"]
@@ -56,7 +58,7 @@ if __name__ == '__main__':
         img_w = mscoco_bottomup_index["img_w"]
 
     print("Loading MSCOCO bottomup features from: {}".format(dataset_args["FasterRCNN"]["mscoco_bottomup_features"]))
-    mscoco_bottomup_features_path = os.path.exists(os.path.join(os.path.expanduser('~'),dataset_args["FasterRCNN"]["mscoco_bottomup_features"]))
+    mscoco_bottomup_features_path = os.path.join(os.path.expanduser('~'),dataset_args["FasterRCNN"]["mscoco_bottomup_features"])
     mscoco_bottomup_features = None
     if args.preloaded:
         print("Loading preloaded MS-COCO Bottom-Up features")
@@ -66,8 +68,7 @@ if __name__ == '__main__':
         mscoco_bottomup_features = np.load(mscoco_bottomup_features_path)
 
     print("Loading MSCOCO bottomup boxes from: {}".format(dataset_args["FasterRCNN"]["mscoco_bottomup_boxes"]))
-    mscoco_bottomup_boxes_path = os.path.exists(
-        os.path.join(os.path.expanduser('~'), dataset_args["FasterRCNN"]["mscoco_bottomup_boxes"]))
+    mscoco_bottomup_boxes_path = os.path.join(os.path.expanduser('~'), dataset_args["FasterRCNN"]["mscoco_bottomup_boxes"])
     mscoco_bottomup_boxes = None
     if args.preloaded:
         print("Loading preloaded MS-COCO Bottom-Up boxes")
@@ -79,7 +80,7 @@ if __name__ == '__main__':
     imgid2fasterRCNNfeatures = {}
     for mscoco_id, mscoco_pos in image_id2image_pos.items():
         imgid2fasterRCNNfeatures[mscoco_id] = dict()
-        imgid2fasterRCNNfeatures[mscoco_id]["features"] = mscoco_bottomup_features[mscoco_pos]
+        imgid2fasterRCNNfeatures[mscoco_id]["features"] = mscoco_bottomup_features['arr_0'][mscoco_pos]
         imgid2fasterRCNNfeatures[mscoco_id]["boxes"] = mscoco_bottomup_boxes[mscoco_pos]
         imgid2fasterRCNNfeatures[mscoco_id]["img_h"] = img_h[mscoco_pos]
         imgid2fasterRCNNfeatures[mscoco_id]["img_w"] = img_w[mscoco_pos]
@@ -316,7 +317,11 @@ if __name__ == '__main__':
         print("Validation Loss:: QGen %.3f, Decider %.3f, Guesser %.3f"%(torch.mean(val_qgen_loss), torch.mean(val_decision_loss), torch.mean(val_guesser_loss)))
         print("Training Accuracy:: Guess  %.3f, Guesser %.3f"%(np.mean(training_guess_accuracy), np.mean(training_guesser_accuracy)))
         print("Validation Accuracy:: Guess  %.3f, Guesser %.3f"%(np.mean(validation_guess_accuracy), np.mean(validation_guesser_accuracy)))
-
+        wandb.log({'Guesser Training Loss': torch.mean(train_guesser_loss),
+                   'Guesser Validation Loss': torch.mean(val_guesser_loss),
+                   'Guesser Training Accuracy': torch.mean(torch.tensor(training_guesser_accuracy)),
+                   'Guesser Validation Accuracy': torch.mean(torch.tensor(validation_guesser_accuracy)),
+                   })
         if exp_config['save_models']:
             print("Saved model to %s" % (model_file))
 
