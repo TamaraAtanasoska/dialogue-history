@@ -25,7 +25,7 @@ pip install -r setup/guesswhat/requirements.txt
 OR
 
 conda env create --name <name> --file setup/guesswhat/conda.yml python=3.6
-conda source activate <name>
+conda activate <name>
 ```
 ### Aixia20201
 ```
@@ -34,7 +34,7 @@ pip install -r setup/aixia2021/requirements.txt
 OR
 
 conda env create --name <name> --file setup/aixia2021/conda.yml python=3.9
-conda source activate <name>
+conda activate <name>
 ```
 
 In order for the training to run faster, it is recommended to use a GPU. Our setup includes NVIDIA GeForce GTX 1080 Ti with CUDA 11.6 installed and we use following command to install PyTorch. You can find the right Pytorch installation for your usecase [here](https://pytorch.org/get-started/locally/).
@@ -183,7 +183,7 @@ python utils/extract_object_features.py \
 
 #### LXMERT features
 
-We obtained the LXMERT feature files by contacting the authors. 
+We obtained the LXMERT features files by contacting the authors. 
 
 
 ## Training the Guesser 
