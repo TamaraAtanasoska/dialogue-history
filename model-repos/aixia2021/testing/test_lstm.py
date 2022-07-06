@@ -39,6 +39,7 @@ if __name__ == '__main__':
     parser.add_argument('-modulo', type=int, default=1,
                         help='This flag will cause the guesser to be updated every modulo number of epochs')
     parser.add_argument('-best_ckpt', type=str, default='', help='Name of the trained model file')
+    parser.add_argument('-model_type', type=str, default='blind', help='blind or visual')
 
     args = parser.parse_args()
 
@@ -50,7 +51,10 @@ if __name__ == '__main__':
     float_tensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
 
     # Init model
-    model = EnsembleDeVries(**ensemble_args)
+    if args.model_type == 'blind':
+        model = EnsembleDeVries(**ensemble_args)
+    elif args.model_type == 'visual':
+        model = EnsembleGuesserOnly(**ensemble_args)
     if use_cuda:
         model.cuda()
         model = DataParallel(model)
@@ -124,7 +128,10 @@ if __name__ == '__main__':
                     history= sample['history'],
                     history_len=sample['history_len']
                 )
-                predictions.append(softmax(guesser_out))
+                if args.model_type == 'blind':
+                    predictions.append(softmax(guesser_out))
+                else:
+                    predictions.append(softmax(guesser_out[1])) # guesser_out is a tuple containing (decider_out, guesser_out) See forward method of EnsembleGuesserOnly
                 targets.append(sample['target_obj'].reshape(-1))
                 #guesser_accuracy = calculate_accuracy(softmax(guesser_out), sample['target_obj'].reshape(-1))
 

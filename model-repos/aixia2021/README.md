@@ -250,7 +250,7 @@ test data. We require following files:
     ```bash
     #Here image_dir should contain both train and val images in same directory
     CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
-    python test/extract_test_object_features.py \
+    python testing/extract_test_object_features.py \
     -image_dir data/img/raw \
     -test_set data/guesswhat.test.jsonl.gz \
     -objects_features_index_path data/test/objects_features_index_example.json \
@@ -264,10 +264,11 @@ Once we have all the test files ready we can test models using best model
 checkpoint saved in `bin/SL/MODEL_NAME`
 ```bash
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
-python testing/test.py \
+python testing/test_lstm.py \ # test_bert for bert based model
 -data_dir data/test \
--config model_nlt config/SL/config_devries.json \
--best_ckpt bin/SL/blind_lstm2022_06_27_13_44/model_ensemble_blind_lstm_E_8
+-config config/SL/config_devries.json \
+-best_ckpt bin/SL/blind_lstm2022_06_27_13_44/model_ensemble_blind_lstm_E_8 \
+-model_type blind # or visual
 ```
 
 
