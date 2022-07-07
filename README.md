@@ -6,6 +6,8 @@ We reproduced part of the expriments in the paper: Greco, C., Testoni, A., & Ber
 
 The team consists of: [Galina Ryazanskaya](https://github.com/flying-bear), [Bhuvanesh Verma](https://github.com/Bhuvanesh-Verma), [Tamara Atanasoska](https://github.com/TamaraAtanasoska). The team contributed to all of the tasks equally. 
 
+If you would like to read more about the reproduction details, our comparison with the original paper and see results from each of the base models and experiments, please read the [project report](project-docs/project-report.pdf).
+
 ## Cloned repositories and code organisation
 
 In [model-repos](model-repos/) directory there are the [guesswhat](model-repos/guesswhat/) and the [aixia2021](model-repos/aixia2021/) cloned and edited repositories. They are clones from the [original GuessWhat repository](https://github.com/GuessWhatGame/guesswhat) and the [paper specific ensemble repository](https://github.com/claudiogreco/aixia2021) respectively. The first one contains the model from the original GuessWhat?! [paper](https://arxiv.org/abs/1611.08481), and the second one contains the original model inspired baseline and the additions that the research group contributed in order to run the experiments described in the paper we are replicating. 
@@ -241,6 +243,13 @@ num_turns : Max number of turns allowed in a dialogue
 ckpt : Path to saved checkpoint
 ```
 
+#### W&B integration
+
+We have introduced [Weights & Biases](https://wandb.ai/site) as a platform support to visualise and keep track of our expriments. You could take advantage of this integration by adding the option ```-exp-tracker``` to the training comamnds. 
+
+If you decide to use the option, Weights & Biases will ask you to log in so you can have access to the visualisations and the logging of the runs. You will be prompted to pick an option about how to use W&B, and logging in will subsequently require your W&B API key. It might be more practical for you to already finish this setup before starting the training runs with this option. You can read [here](https://docs.wandb.ai/ref/cli/wandb-login) how to do that from the command line. Creating an account before this step in necessary. 
+
+
 #### Language/Blind models
 
 ##### Bling LSTM model (inspired by the original GuessWhat?! model)
@@ -249,7 +258,6 @@ The orignal GuessWhat!? mode that is featured in the orginal repo is part of the
 ```bash
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
 python train/SL/train_lstm_guesser_only.py \
-  -modulo 7 \
   -no_decider \
   -exp_name name \
   -bin_name name
@@ -262,7 +270,6 @@ To train the model from scratch, add ```-from_scratch```.
 ```bash
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
 python train/SL/train_bert.py \
-  -modulo 7 \
   -no_decider \
   -exp_name name \
   -bin_name name
@@ -275,7 +282,6 @@ python train/SL/train_bert.py \
 ```bash
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
 python train/SL/train_vlstm_guesser_only.py \
-  -modulo 7 \
   -no_decider \
   -exp_name name \
   -bin_name name
@@ -290,18 +296,68 @@ To train the model from scratch, add ```-from_scratch```. To use preloaded MS-CO
 ```bash
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
 python train/SL/train_lxmert_guesser_only.py \
-  -modulo 7 \
   -no_decider \
   -exp_name name \
   -bin_name name
 ```
 
-## Experiments 
+## Testing and running expriments
 
-Although the paper we are replicating features a larger number of experiments and they are overall more granuated, we focused on exploring the effect of removing the last turn, and the effect of reversing the history. You can read more about the expriements in the [paper](https://github.com/TamaraAtanasoska/dialogue-history/blob/main/project-docs/Greco%2C%20Testoni%2C%20Bernardi_2020.pdf) discussion sections.
+Although the paper we are replicating features a larger number of experiments and they are overall more granuated, we focused on exploring the effect of removing the last turn, and the effect of reversing the history. You can read more about the expriements in the [paper](https://github.com/TamaraAtanasoska/dialogue-history/blob/main/project-docs/Greco%2C%20Testoni%2C%20Bernardi_2020.pdf) discussion sections. 
 
-The script to generate the new data json files is located at [experiments_data_prep.py](experiments_data_prep.py).
+The script to generate the new data json files is located at [experiments_data_prep.py](experiments_data_prep.py). It will create new json files based on the test data, for both of the expriements. 
 
-After generating new json data files for the expriments, we suggest that you you add the files in a new directory at ```data/expriments/<experiment>```. When training any of the Guesser models, please add the right directory next to the ```-data_dir``` parameter, for example ```-data_dir data/experiments/reverse-history```. This applies to both the original GuessWhat?! repository and the Aixia20201 ensemble. 
+For the original GuessWhat?! repo, the testing step is triggered automatically after the training is done. To do the testing on the experiment data, you will need to replace the ```guesswhat.test.jsonl.gz``` with the json generated by the script for the expriment you are interested in. 
 
-**Important: for the experiment with the last turn removed for the Aixia2021 models, the ResNet image features will need to be regenerated with the changed json files as input. Please repeat the ResNet features generation steps from the corresponding section above. In the case of the original GuessWhat?! repository, you will need to recreate the dictionary file passing the correct expreriment data folder as input.**
+To test the ```Aixia2021``` models on expriment data, you would need to take the following steps:
+
+1. Make sure that you are already in the model directory at ```model-repos/aixia2021/```.
+2. Use the [experiments_data_prep.py](experiments_data_prep.py) to prepare your data for the expriments. 
+3. You can pick your folder structure, although you will need to place three files in the same folder. You will also need to copy the ```vocab.json``` file from the main data folder in your experiment subfolders. This step is important to ensure the same embeddings will be used. 
+
+    If we pick the ```no-last-turn``` experiement as an example, the file organisation could look like this: 
+    ```
+    data/test/experiment/no-last-turn
+                         ├── guesswhat.test.jsonl.gz       #this is the output of the json modification script
+                         ├── vocab.json                    #the same vocabulary file copied from the main data folder
+                         └── n2n_test_successful_data.json #one of a few image feature files we will generate next 
+    ```
+4. Now it is time to generate the image features. The image must be regenerated every time the original dialogue json files are changed. These commands resemble the feature generation commands up, but use different scripts and different locations. 
+
+   ```bash
+   CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER/ \
+   python utils/datasets/SL/prepro.py \ #use utils/datasets/SL/prepro_lxmert.py for LXMERT
+   -data_dir data/test/experiment/no-last-turn \
+   -data_file data/test/experiment/no-last-turn/guesswhat.test.jsonl.gz \
+   -vocab_file data/test/experiment/no-last-turn/vocab.json \
+   -split test
+   ```   
+   For these next two commands, you need to have both train and validation images in the same directory. 
+   
+    ```bash
+    CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
+    python testing/ExtractTestImgfeatures.py \
+    -image_dir data/img/raw \
+    -n2n_test_set data/test/experiment/no-last-turn/n2n_test_successful_data.json \
+    -image_features_json_path data/test/experiment/no-last-turn/ResNet_avg_image_features2id.json \
+    -image_features_path data/test/experiment/no-last-turn/ResNet_avg_image_features.h5
+   ```
+   
+    ```bash
+    CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
+    python testing/extract_test_object_features.py \
+    -image_dir data/img/raw \
+    -test_set data/test/experiment/no-last-turn/guesswhat.test.jsonl.gz \
+    -objects_features_index_path data/test/experiment/no-last-turn/objects_features_index_example.json \
+    -objects_features_path data/test/experiment/no-last-turn/objects_features_example.h5
+   ```
+5. Once all the image features are generated, we can run the test script for each experiment. Important to note is that you will need to know which model you would like to test. You can find your models in ```bin/SL/<model-location>```. The location of the best model is passed to the ```-best_ckpt``` option.
+
+    ```
+    CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
+    python testing/test_lstm.py \  #test_bert instead of test_lstm for the transformer models
+    -data_dir data/test/experiment/no-last-turn/ \
+    -config config/SL/config_devries.json \
+    -best_ckpt bin/SL/<best-model-location> \ #example model 
+    -model_type blind  #or visual
+    ```
