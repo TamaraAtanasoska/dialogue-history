@@ -243,6 +243,13 @@ num_turns : Max number of turns allowed in a dialogue
 ckpt : Path to saved checkpoint
 ```
 
+#### W&B integration
+
+We have introduced [Weights & Biases](https://wandb.ai/site) as a platform support to visualise and keep track of our expriments. You could take advantage of this integration by adding the option ```-exp-tracker``` to the training comamnds. 
+
+If you decide to use the option, Weights & Biases will ask you to log in so you can have access to the visualisations and the logging of the runs. You will be prompted to pick an option about how to use W&B, and logging in will subsequently require your W&B API key. It might be more practical for you to already finish this setup before starting the training runs with this option. You can read [here](https://docs.wandb.ai/ref/cli/wandb-login) how to do that from the command line. Creating an account before this step in necessary. 
+
+
 #### Language/Blind models
 
 ##### Bling LSTM model (inspired by the original GuessWhat?! model)
