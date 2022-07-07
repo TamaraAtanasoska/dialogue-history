@@ -1,8 +1,8 @@
+import argparse
 import gzip
 import json
 import os
 
-import argparse
 from nltk.tokenize import TweetTokenizer
 
 from utils.image_utils import get_spatial_feat
@@ -38,19 +38,19 @@ def create_data_file(data_dir, data_file, data_args, vocab_file_name, split='tra
         data_file_name = data_args['data_paths'][tmp_key]
     else:
         if successful_only:
-            data_file_name = 'n2n_'+split+'_successful_data.json'
+            data_file_name = 'n2n_' + split + '_successful_data.json'
         else:
-            data_file_name = 'n2n_'+split+'_all_data.json'
+            data_file_name = 'n2n_' + split + '_all_data.json'
 
     print('Creating New ' + data_file_name + ' File.')
 
-    category_pad_token = 0 #TODO Add this to config.json
-    decidermask_pad_token = -1 #TODO Add this to config.json
+    category_pad_token = 0  # TODO Add this to config.json
+    decidermask_pad_token = -1  # TODO Add this to config.json
     max_no_objects = data_args['max_no_objects']
     max_q_length = data_args['max_q_length']
     max_src_length = data_args['max_src_length']
     max_no_qs = data_args['max_no_qs']
-    no_spatial_feat = 8 #TODO Add this to config.json
+    no_spatial_feat = 8  # TODO Add this to config.json
 
     tknzr = TweetTokenizer(preserve_case=False)
     n2n_data = dict()
@@ -61,8 +61,8 @@ def create_data_file(data_dir, data_file, data_args, vocab_file_name, split='tra
         word2i = json.load(file)['word2i']
 
     ans2tok = {'Yes': word2i['<yes>'],
-    		   'No': word2i['<no>'],
-    		   'N/A': word2i['<n/a>']}
+               'No': word2i['<no>'],
+               'N/A': word2i['<n/a>']}
 
     start = '<start>'
     # stop = '<stop>'
@@ -79,7 +79,7 @@ def create_data_file(data_dir, data_file, data_args, vocab_file_name, split='tra
                 continue
 
             objects = list()
-            object_ids = list() # These are added for crop features
+            object_ids = list()  # These are added for crop features
             spatials = list()
             bboxes = list()
             target = int()
@@ -88,7 +88,8 @@ def create_data_file(data_dir, data_file, data_args, vocab_file_name, split='tra
                 object = game['objects'][o]
                 objects.append(object['category_id'])
                 object_ids.append(object['object_id'])
-                spatials.append(get_spatial_feat(bbox=object['bbox'], im_width=game['picture']['width'], im_height=game['picture']['height']))
+                spatials.append(get_spatial_feat(bbox=object['bbox'], im_width=game['picture']['width'],
+                                                 im_height=game['picture']['height']))
 
                 if object['object_id'] == game['object_id']:
                     target = i
@@ -107,7 +108,8 @@ def create_data_file(data_dir, data_file, data_args, vocab_file_name, split='tra
                 if i != 0:
                     # remove padding from previous target and current source
                     src_unpad = src[:src.index(word2i['<padding>'])] if word2i['<padding>'] in src else src
-                    target_q_unpad = target_q[:target_q.index(word2i['<padding>'])] if word2i['<padding>'] in target_q else target_q
+                    target_q_unpad = target_q[:target_q.index(word2i['<padding>'])] if word2i[
+                                                                                           '<padding>'] in target_q else target_q
                     src = src_unpad + target_q_unpad + [ans2tok[answer]]
                 else:
                     src = [word2i[start]]
@@ -122,9 +124,10 @@ def create_data_file(data_dir, data_file, data_args, vocab_file_name, split='tra
                 n2n_data[_id] = dict()
                 n2n_data[_id]['tgt_len'] = min(len(target_q), max_q_length)
                 n2n_data[_id]['history_len'] = min(len(src), max_src_length)
-                history_q_lens = src_lengths[:] # Deep copy
+                history_q_lens = src_lengths[:]  # Deep copy
                 len_hql = len(history_q_lens)
-                history_q_lens.extend([0]*((max_no_qs+1)-len(history_q_lens))) # +1 because of start token is consiidered as first question
+                history_q_lens.extend([0] * ((max_no_qs + 1) - len(
+                    history_q_lens)))  # +1 because of start token is consiidered as first question
                 n2n_data[_id]['history_q_lens'] = history_q_lens
                 n2n_data[_id]['len_hql'] = len_hql
                 target_q.extend([word2i['<padding>']] * (max_q_length - len(target_q)))
@@ -134,23 +137,25 @@ def create_data_file(data_dir, data_file, data_args, vocab_file_name, split='tra
                 n2n_data[_id]['src_q'] = src_q[:max_q_length]
                 n2n_data[_id]['target_q'] = target_q[:max_q_length]
                 n2n_data[_id]['decider_tgt'] = 0
-                decider_mask = [n2n_data[_id]['decider_tgt']]*len_hql
-                decider_mask.extend([decidermask_pad_token]*((max_no_qs+1)-len_hql))
+                decider_mask = [n2n_data[_id]['decider_tgt']] * len_hql
+                decider_mask.extend([decidermask_pad_token] * ((max_no_qs + 1) - len_hql))
                 n2n_data[_id]['decider_mask'] = decider_mask
                 n2n_data[_id]['objects'] = objects
                 n2n_data[_id]['object_ids'] = object_ids
                 n2n_data[_id]['spatials'] = spatials
                 n2n_data[_id]['target_obj'] = target
                 n2n_data[_id]['target_cat'] = target_cat
-                n2n_data[_id]['bboxes'] = bboxes # Change in v2 only target bbox is included as everything is not required
-                n2n_data[_id]['game_id'] = str(game['dialogue_id']) # game_id == dialogue_id ??
+                n2n_data[_id][
+                    'bboxes'] = bboxes  # Change in v2 only target bbox is included as everything is not required
+                n2n_data[_id]['game_id'] = str(game['dialogue_id'])  # game_id == dialogue_id ??
                 n2n_data[_id]['image_file'] = game['picture']['file_name']
                 n2n_data[_id]['image_url'] = game['picture']['coco_url']
                 _id += 1
 
             src_unpad = src[:src.index(word2i['<padding>'])] if word2i['<padding>'] in src else src
-            target_q_unpad = target_q[:target_q.index(word2i['<padding>'])] if word2i['<padding>'] in target_q else target_q
-            src = src_unpad +  target_q_unpad + [ans2tok[answer]]
+            target_q_unpad = target_q[:target_q.index(word2i['<padding>'])] if word2i[
+                                                                                   '<padding>'] in target_q else target_q
+            src = src_unpad + target_q_unpad + [ans2tok[answer]]
             src_q = [0]
             target_q = [0]
             src_lengths.append(len(src))
@@ -159,9 +164,10 @@ def create_data_file(data_dir, data_file, data_args, vocab_file_name, split='tra
             n2n_data[_id] = dict()
             n2n_data[_id]['tgt_len'] = min(len(target_q), max_q_length)
             n2n_data[_id]['history_len'] = min(len(src), max_src_length)
-            history_q_lens = src_lengths[:] # Deep copy
+            history_q_lens = src_lengths[:]  # Deep copy
             len_hql = len(history_q_lens)
-            history_q_lens.extend([0]*((max_no_qs+1)-len(history_q_lens))) # +1 because of start token is consiidered as first question
+            history_q_lens.extend([0] * ((max_no_qs + 1) - len(
+                history_q_lens)))  # +1 because of start token is consiidered as first question
             n2n_data[_id]['history_q_lens'] = history_q_lens
             n2n_data[_id]['len_hql'] = len_hql
             target_q.extend([word2i['<padding>']] * (max_q_length - len(target_q)))
@@ -171,8 +177,9 @@ def create_data_file(data_dir, data_file, data_args, vocab_file_name, split='tra
             n2n_data[_id]['src_q'] = src_q[:max_q_length]
             n2n_data[_id]['target_q'] = target_q[:max_q_length]
             n2n_data[_id]['decider_tgt'] = 1
-            decider_mask = [0]*(len_hql-1) + [n2n_data[_id]['decider_tgt']]*1 # Because only the last target is guess
-            decider_mask.extend([decidermask_pad_token]*((max_no_qs+1)-len_hql))
+            decider_mask = [0] * (len_hql - 1) + [
+                n2n_data[_id]['decider_tgt']] * 1  # Because only the last target is guess
+            decider_mask.extend([decidermask_pad_token] * ((max_no_qs + 1) - len_hql))
             n2n_data[_id]['decider_mask'] = decider_mask
             n2n_data[_id]['objects'] = objects
             n2n_data[_id]['object_ids'] = object_ids
@@ -215,4 +222,5 @@ if __name__ == '__main__':
         'data_paths': ''
     }
 
-    create_data_file(data_dir=data_dir, data_file=data_file, data_args=data_args, vocab_file_name=vocab_file, split=split)
+    create_data_file(data_dir=data_dir, data_file=data_file, data_args=data_args, vocab_file_name=vocab_file,
+                     split=split)

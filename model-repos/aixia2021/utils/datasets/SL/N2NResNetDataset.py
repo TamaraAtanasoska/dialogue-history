@@ -7,8 +7,6 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 
 from utils.create_subset import create_subset
-
-
 from utils.datasets.SL.prepro import create_data_file
 
 
@@ -25,9 +23,9 @@ class N2NResNetDataset(Dataset):
             data_file_name = self.data_args['data_paths'][tmp_key]
         else:
             if self.data_args['successful_only']:
-                data_file_name = 'n2n_'+split+'_successful_data.json'
+                data_file_name = 'n2n_' + split + '_successful_data.json'
             else:
-                data_file_name = 'n2n_'+split+'_all_data.json'
+                data_file_name = 'n2n_' + split + '_all_data.json'
 
         if self.data_args['new_data'] or not os.path.isfile(os.path.join(self.data_args['data_dir'], data_file_name)):
             create_data_file(
@@ -39,11 +37,11 @@ class N2NResNetDataset(Dataset):
             )
 
         if self.data_args['my_cpu']:
-            if not os.path.isfile(os.path.join(self.data_args['data_dir'], 'subset_'+data_file_name)):
+            if not os.path.isfile(os.path.join(self.data_args['data_dir'], 'subset_' + data_file_name)):
                 create_subset(data_dir=self.data_args['data_dir'], dataset_file_name=data_file_name, split=split)
 
         if self.data_args['my_cpu']:
-            with open(os.path.join(self.data_args['data_dir'], 'subset_'+data_file_name), 'r') as f:
+            with open(os.path.join(self.data_args['data_dir'], 'subset_' + data_file_name), 'r') as f:
                 self.n2n_data = json.load(f)
         else:
             with open(os.path.join(self.data_args['data_dir'], data_file_name), 'r') as f:
@@ -68,11 +66,13 @@ class N2NResNetDataset(Dataset):
             img_path = tmp_img_path
         else:
             # Taking care if image is stored as in MS-COCO directory structure
-            tmp_img_path = os.path.join(self.data_args['data_paths']['image_path'],'train2014' ,self.n2n_data[idx]['image_file'])
+            tmp_img_path = os.path.join(self.data_args['data_paths']['image_path'], 'train2014',
+                                        self.n2n_data[idx]['image_file'])
             if os.path.isfile(tmp_img_path):
                 img_path = tmp_img_path
             else:
-                tmp_img_path = os.path.join(self.data_args['data_paths']['image_path'], 'val2014', self.n2n_data[idx]['image_file'])
+                tmp_img_path = os.path.join(self.data_args['data_paths']['image_path'], 'val2014',
+                                            self.n2n_data[idx]['image_file'])
                 if os.path.isfile(tmp_img_path):
                     img_path = tmp_img_path
                 else:
@@ -87,7 +87,8 @@ class N2NResNetDataset(Dataset):
         _data['tgt_len'] = self.n2n_data[idx]['tgt_len']
         _data['decider_tgt'] = int(self.n2n_data[idx]['decider_tgt'])
         _data['objects'] = np.asarray(self.n2n_data[idx]['objects'])
-        _data['objects_mask'] = np.asarray(1-np.equal(self.n2n_data[idx]['objects'], np.zeros(len(self.n2n_data[idx]['objects']))))
+        _data['objects_mask'] = np.asarray(
+            1 - np.equal(self.n2n_data[idx]['objects'], np.zeros(len(self.n2n_data[idx]['objects']))))
         _data['spatials'] = np.asarray(self.n2n_data[idx]['spatials'])
         _data['target_obj'] = self.n2n_data[idx]['target_obj']
         _data['target_cat'] = self.n2n_data[idx]['target_cat']

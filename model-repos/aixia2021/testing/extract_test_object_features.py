@@ -14,8 +14,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-image_dir", type=str, default="/home/users/bverma/project/sync/al/data/images")
     parser.add_argument("-test_set", type=str, default="data/test/experiments/reverse_history/guesswhat.test.jsonl.gz")
-    parser.add_argument("-objects_features_index_path", type=str, default="data/test/experiments/reverse_history/objects_features_index_example.json")
-    parser.add_argument("-objects_features_path", type=str, default="data/test/experiments/reverse_history/objects_features_example.h5")
+    parser.add_argument("-objects_features_index_path", type=str,
+                        default="data/test/experiments/reverse_history/objects_features_index_example.json")
+    parser.add_argument("-objects_features_path", type=str,
+                        default="data/test/experiments/reverse_history/objects_features_example.h5")
     args = parser.parse_args()
 
     games = []
