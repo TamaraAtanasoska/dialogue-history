@@ -7,18 +7,20 @@ import h5py
 import numpy as np
 from torch.utils.data import Dataset
 
-
 from utils.datasets.SL.prepro_lxmert import create_data_file
 
 
 class N2NBERTDataset(Dataset):
-    def __init__(self, split='train', split_turns=False, add_sep=False, create_subset=None, with_objects_feat=False, num_turns=None, game_ids=None, complete_only=False, **kwargs):
+    def __init__(self, split='train', split_turns=False, add_sep=False, create_subset=None, with_objects_feat=False,
+                 num_turns=None, game_ids=None, complete_only=False, **kwargs):
         self.data_args = kwargs
         self.with_objects_feat = with_objects_feat
 
         if with_objects_feat:
-            objects_feat_file = os.path.join(self.data_args['data_dir'], self.data_args['data_paths']['ResNet']['objects_features'] )
-            objects_feat_mapping_file = os.path.join(self.data_args['data_dir'], self.data_args['data_paths']['ResNet']['objects_features_index'] )
+            objects_feat_file = os.path.join(self.data_args['data_dir'],
+                                             self.data_args['data_paths']['ResNet']['objects_features'])
+            objects_feat_mapping_file = os.path.join(self.data_args['data_dir'],
+                                                     self.data_args['data_paths']['ResNet']['objects_features_index'])
             self.objects_vf = h5py.File(objects_feat_file, 'r')['objects_features']
 
             with open(objects_feat_mapping_file, 'r') as file_v:
@@ -30,9 +32,9 @@ class N2NBERTDataset(Dataset):
             data_file_name = self.data_args['data_paths'][tmp_key]
         else:
             if self.data_args['successful_only']:
-                data_file_name = 'n2n_'+split+'_successful_data_lxmert.json'
+                data_file_name = 'n2n_' + split + '_successful_data_lxmert.json'
             else:
-                data_file_name = 'n2n_'+split+'_all_data_lxmert.json'
+                data_file_name = 'n2n_' + split + '_all_data_lxmert.json'
 
         if self.data_args['new_data'] or not os.path.isfile(os.path.join(self.data_args['data_dir'], data_file_name)):
             create_data_file(
@@ -44,11 +46,11 @@ class N2NBERTDataset(Dataset):
             )
 
         if self.data_args['my_cpu']:
-            if not os.path.isfile(os.path.join(self.data_args['data_dir'], 'subset_'+split+'_lxmert.json')):
+            if not os.path.isfile(os.path.join(self.data_args['data_dir'], 'subset_' + split + '_lxmert.json')):
                 create_subset(data_dir=self.data_args['data_dir'], dataset_file_name=data_file_name, split=split)
 
         if self.data_args['my_cpu']:
-            with open(os.path.join(self.data_args['data_dir'], 'subset_'+split+'_lxmert.json'), 'r') as f:
+            with open(os.path.join(self.data_args['data_dir'], 'subset_' + split + '_lxmert.json'), 'r') as f:
                 self.n2n_data = json.load(f)
         else:
             with open(os.path.join(self.data_args['data_dir'], data_file_name), 'r') as f:
@@ -192,7 +194,8 @@ class N2NBERTDataset(Dataset):
         _data['tgt_len'] = self.n2n_data[idx]['tgt_len']
         _data['decider_tgt'] = int(self.n2n_data[idx]['decider_tgt'])
         _data['objects'] = np.asarray(self.n2n_data[idx]['objects'])
-        _data['objects_mask'] = np.asarray(1-np.equal(self.n2n_data[idx]['objects'], np.zeros(len(self.n2n_data[idx]['objects']))))
+        _data['objects_mask'] = np.asarray(
+            1 - np.equal(self.n2n_data[idx]['objects'], np.zeros(len(self.n2n_data[idx]['objects']))))
         _data['spatials'] = np.asarray(self.n2n_data[idx]['spatials'])
         _data['target_obj'] = self.n2n_data[idx]['target_obj']
         _data['target_cat'] = self.n2n_data[idx]['target_cat']

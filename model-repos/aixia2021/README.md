@@ -139,7 +139,6 @@ ckpt : Path to saved checkpoint
 ```bash
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
 python train/SL/train_lstm_guesser_only.py \
--modulo 7 \
 -no_decider \
 -exp_name test \
 -bin_name test
@@ -149,7 +148,6 @@ python train/SL/train_lstm_guesser_only.py \
 ```bash
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
 python train/SL/train_bert.py \
--modulo 7 \
 -no_decider \
 -exp_name test \
 -bin_name test
@@ -163,7 +161,6 @@ Use parameter `from_scratch` to train BERT model from scratch.
 ```bash
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
 python train/SL/train_vlstm_guesser_only.py \
--modulo 7 \
 -no_decider \
 -exp_name test \
 -bin_name test
@@ -175,7 +172,6 @@ python train/SL/train_vlstm_guesser_only.py \
 # Cannot be trained, required input files are not available yet
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
 python train/SL/train_lxmert_guesser_only.py \
--modulo 7 \
 -no_decider \
 -exp_name test \
 -bin_name test
@@ -183,12 +179,16 @@ python train/SL/train_lxmert_guesser_only.py \
 Use parameter `from_scratch` to train LXMERT model from scratch and `preloaded`
 to use preloaded MS-COCO Bottom-Up features.
 
-## Experiments
+## Experiments (Outdated)
+
+**NOTE**: We don't need to train model for experiments. We only manipulate test
+json for respective experiment and then test them on model trained for task 
+success.
 
 In order to perform following experiments, we manipulate original GuessWhat
 data using [modify_json.py](model-repos/guesswhat/src/guesswhat/preprocess_data/modify_json.py) 
 script.
-### No Last Turns
+### No Last Turns 
 
 For no last turn experiment, we remove last turn from each dialogue and 
 create new GuessWhat json files for all splits.
@@ -217,16 +217,10 @@ python train/SL/TRAIN_ANY_MODEL.py \
 ```
 
 ## Testing
-For testing all the trained models, we need to create testing files using
+For testing all the trained models, we need to create test files using
 test data. We require following files:
 1. guesswhat.test.jsonl.gz
-2. vocab.json
-    ```bash
-   CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER/ \
-   python utils/vocab.py \
-   -data_dir data/test \
-   -data_file guesswhat.test.jsonl.gz
-   ```
+2. vocab.json : Use vocab.json created during training or created using train data
 3. n2n_test_successful_data.json
     ```bash
    CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER/ \
