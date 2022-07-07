@@ -223,6 +223,8 @@ The scripts below assume that you are already in the model directory at ```model
 
 #### Common training parameters between the models
 
+The text below is copied from the original repo. 
+
 ```
 data : Data Directory containing 
             1. ResNet image and object features,
@@ -325,14 +327,14 @@ To test the ```Aixia2021``` models on expriment data, you would need to take the
 4. Now it is time to generate the image features. The image must be regenerated every time the original dialogue json files are changed. These commands resemble the feature generation commands up, but use different scripts and different locations. 
 
    ```bash
-   CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER/ \
-   python utils/datasets/SL/prepro.py \ #use utils/datasets/SL/prepro_lxmert.py for LXMERT
-   -data_dir data/test/experiment/no-last-turn \
-   -data_file data/test/experiment/no-last-turn/guesswhat.test.jsonl.gz \
-   -vocab_file data/test/experiment/no-last-turn/vocab.json \
-   -split test
+    CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER/ \
+    python utils/datasets/SL/prepro.py \ #use utils/datasets/SL/prepro_lxmert.py for LXMERT
+    -data_dir data/test/experiment/no-last-turn \
+    -data_file data/test/experiment/no-last-turn/guesswhat.test.jsonl.gz \
+    -vocab_file data/test/experiment/no-last-turn/vocab.json \
+    -split test
    ```   
-   For these next two commands, you need to have both train and validation images in the same directory. 
+    Note: the directory passed to the ```-img_dir``` option needs to contain both the train and valid images in the same directory. 
    
     ```bash
     CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
