@@ -249,7 +249,6 @@ The orignal GuessWhat!? mode that is featured in the orginal repo is part of the
 ```bash
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
 python train/SL/train_lstm_guesser_only.py \
-  -modulo 7 \
   -no_decider \
   -exp_name name \
   -bin_name name
@@ -262,7 +261,6 @@ To train the model from scratch, add ```-from_scratch```.
 ```bash
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
 python train/SL/train_bert.py \
-  -modulo 7 \
   -no_decider \
   -exp_name name \
   -bin_name name
@@ -275,7 +273,6 @@ python train/SL/train_bert.py \
 ```bash
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
 python train/SL/train_vlstm_guesser_only.py \
-  -modulo 7 \
   -no_decider \
   -exp_name name \
   -bin_name name
@@ -290,7 +287,6 @@ To train the model from scratch, add ```-from_scratch```. To use preloaded MS-CO
 ```bash
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
 python train/SL/train_lxmert_guesser_only.py \
-  -modulo 7 \
   -no_decider \
   -exp_name name \
   -bin_name name
