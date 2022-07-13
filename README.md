@@ -363,3 +363,22 @@ To test the ```Aixia2021``` models on experiment data, you would need to take th
     -best_ckpt bin/SL/<best-model-location> \ #example model 
     -model_type blind  #or visual
     ```
+
+## Future plans (for September 2022)
+
+We will mainly focus on doing expriements without the raw category as part of the input and making the LXMERT model work for us. When possible we will add a few more small improvements. 
+
+### Small improvements list
+
+General: 
+- remove all unused files 
+- docs: W&B project name and entity set up, the Decider
+- remove the Tensorboard dependency (eg. vis.py )
+- blend the experiments file for clarity and speed
+- increase speed closer to max GPU% (for LSTM models)
+
+Testing and training:
+- create ResNet image and object features on the go (add or modify option)
+- save and show the best checkpoint
+- integrate testing in the train script and trigger it with the best epoch
+- combine all the run(train/test) scripts in one 
