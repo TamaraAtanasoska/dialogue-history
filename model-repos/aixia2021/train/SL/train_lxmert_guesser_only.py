@@ -58,8 +58,7 @@ if __name__ == '__main__':
     ensemble_args, dataset_args, optimizer_args, exp_config = preprocess_config(args)
 
     print("Loading MSCOCO bottomup index from: {}".format(dataset_args["FasterRCNN"]["mscoco_bottomup_index"]))
-    mscoco_bottomup_index_path = os.path.join(os.path.expanduser('~'),
-                                              dataset_args["FasterRCNN"]["mscoco_bottomup_index"])
+    mscoco_bottomup_index_path = dataset_args["FasterRCNN"]["mscoco_bottomup_index"]
     with open(mscoco_bottomup_index_path) as in_file:
         mscoco_bottomup_index = json.load(in_file)
         image_id2image_pos = mscoco_bottomup_index["image_id2image_pos"]
@@ -68,8 +67,7 @@ if __name__ == '__main__':
         img_w = mscoco_bottomup_index["img_w"]
 
     print("Loading MSCOCO bottomup features from: {}".format(dataset_args["FasterRCNN"]["mscoco_bottomup_features"]))
-    mscoco_bottomup_features_path = os.path.join(os.path.expanduser('~'),
-                                                 dataset_args["FasterRCNN"]["mscoco_bottomup_features"])
+    mscoco_bottomup_features_path = dataset_args["FasterRCNN"]["mscoco_bottomup_features"]
     mscoco_bottomup_features = None
     if args.preloaded:
         print("Loading preloaded MS-COCO Bottom-Up features")
@@ -79,8 +77,7 @@ if __name__ == '__main__':
         mscoco_bottomup_features = np.load(mscoco_bottomup_features_path)
 
     print("Loading MSCOCO bottomup boxes from: {}".format(dataset_args["FasterRCNN"]["mscoco_bottomup_boxes"]))
-    mscoco_bottomup_boxes_path = os.path.join(os.path.expanduser('~'),
-                                              dataset_args["FasterRCNN"]["mscoco_bottomup_boxes"])
+    mscoco_bottomup_boxes_path = dataset_args["FasterRCNN"]["mscoco_bottomup_boxes"]
     mscoco_bottomup_boxes = None
     if args.preloaded:
         print("Loading preloaded MS-COCO Bottom-Up boxes")
