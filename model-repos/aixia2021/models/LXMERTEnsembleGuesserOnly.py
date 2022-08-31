@@ -1,3 +1,5 @@
+import pathlib
+
 from types import SimpleNamespace
 
 import torch
@@ -36,7 +38,7 @@ class LXMERTEnsembleGuesserOnly(nn.Module):
         )
         if not lxrt_encoder_args.from_scratch:
             print("Loading LXMERT pretrained model...")
-            self.lxrt_encoder.load(lxrt_encoder_args.model_path)
+            self.lxrt_encoder.load(str(pathlib.Path(__file__).parent.parent.resolve()) + lxrt_encoder_args.model_path)
         else:
             print("Initializing LXMERT model from scratch...")
 

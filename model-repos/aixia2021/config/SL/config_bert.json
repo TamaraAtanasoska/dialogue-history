@@ -11,7 +11,7 @@
      "xlayers": 5,
      "rlayers": 5,
      "from_scratch": false,
-     "model_path": "./lxmert/snap/pretrained/model"
+     "model_path": "/lxmert/snap/pretrained/model"
     }
  },
 
