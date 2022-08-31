@@ -58,8 +58,7 @@ if __name__ == '__main__':
     ensemble_args, dataset_args, optimizer_args, exp_config = preprocess_config(args)
 
     print("Loading MSCOCO bottomup index from: {}".format(dataset_args["FasterRCNN"]["mscoco_bottomup_index"]))
-    mscoco_bottomup_index_path = dataset_args["FasterRCNN"]["mscoco_bottomup_index"]
-    with open(mscoco_bottomup_index_path) as in_file:
+    with open(dataset_args["FasterRCNN"]["mscoco_bottomup_index"]) as in_file:
         mscoco_bottomup_index = json.load(in_file)
         image_id2image_pos = mscoco_bottomup_index["image_id2image_pos"]
         image_pos2image_id = mscoco_bottomup_index["image_pos2image_id"]
@@ -67,29 +66,27 @@ if __name__ == '__main__':
         img_w = mscoco_bottomup_index["img_w"]
 
     print("Loading MSCOCO bottomup features from: {}".format(dataset_args["FasterRCNN"]["mscoco_bottomup_features"]))
-    mscoco_bottomup_features_path = dataset_args["FasterRCNN"]["mscoco_bottomup_features"]
     mscoco_bottomup_features = None
     if args.preloaded:
         print("Loading preloaded MS-COCO Bottom-Up features")
         mscoco_bottomup_features = sharearray.cache("mscoco_vectorized_features", lambda: None)
         mscoco_bottomup_features = np.array(mscoco_bottomup_features)
     else:
-        mscoco_bottomup_features = np.load(mscoco_bottomup_features_path)
-
+        mscoco_bottomup_features = np.load(dataset_args["FasterRCNN"]["mscoco_bottomup_features"])
+        mscoco_bottomup_features = mscoco_bottomup_features.f.arr_0
     print("Loading MSCOCO bottomup boxes from: {}".format(dataset_args["FasterRCNN"]["mscoco_bottomup_boxes"]))
-    mscoco_bottomup_boxes_path = dataset_args["FasterRCNN"]["mscoco_bottomup_boxes"]
     mscoco_bottomup_boxes = None
     if args.preloaded:
         print("Loading preloaded MS-COCO Bottom-Up boxes")
         mscoco_bottomup_boxes = sharearray.cache("mscoco_vectorized_boxes", lambda: None)
         mscoco_bottomup_boxes = np.array(mscoco_bottomup_boxes)
     else:
-        mscoco_bottomup_boxes = np.load(mscoco_bottomup_boxes_path)
+        mscoco_bottomup_boxes = np.load(dataset_args["FasterRCNN"]["mscoco_bottomup_boxes"])
 
     imgid2fasterRCNNfeatures = {}
     for mscoco_id, mscoco_pos in image_id2image_pos.items():
         imgid2fasterRCNNfeatures[mscoco_id] = dict()
-        imgid2fasterRCNNfeatures[mscoco_id]["features"] = mscoco_bottomup_features['arr_0'][mscoco_pos]
+        imgid2fasterRCNNfeatures[mscoco_id]["features"] = mscoco_bottomup_features[mscoco_pos]
         imgid2fasterRCNNfeatures[mscoco_id]["boxes"] = mscoco_bottomup_boxes[mscoco_pos]
         imgid2fasterRCNNfeatures[mscoco_id]["img_h"] = img_h[mscoco_pos]
         imgid2fasterRCNNfeatures[mscoco_id]["img_w"] = img_w[mscoco_pos]
