@@ -289,9 +289,14 @@ python train/SL/train_vlstm_guesser_only.py \
 
 ##### LXMERT
 
-**Important: It is currently not possible (for us) to train LXMERT. The files provided by the authors require computational resources to load that we don't have access to. We are trying out strategies to solve this problem. We will most likely upload scripts that modify the data. If you don't have a problem of this sort, the command below might just work.**
+To train the model from scratch, add ```-from_scratch```. To use preloaded MS-COCO bottom-Up features add ```-preloaded```. If you don't train the model from scratch, you are using the pretrained version and you will need to download it. Please follow the steps below.  
 
-To train the model from scratch, add ```-from_scratch```. To use preloaded MS-COCO bottom-Up features add ```-preloaded```. 
+```
+mkdir -p lxmert/snap/pretrained 
+wget http://nlp.cs.unc.edu/data/model_LXRT.pth -P snap/pretrained
+```
+
+To train, use the following command:
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
