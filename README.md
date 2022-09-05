@@ -245,7 +245,7 @@ ckpt : Path to saved checkpoint
 
 #### W&B integration
 
-We have introduced [Weights & Biases](https://wandb.ai/site) as platform support to visualize and keep track of our experiments. You could take advantage of this integration by adding the option ```-exp-tracker``` to the training commands. 
+We have introduced [Weights & Biases](https://wandb.ai/site) as platform support to visualize and keep track of our experiments. You could take advantage of this integration by adding the option ```-exp_tracker wandb``` to the training commands. 
 
 If you decide to use the option, Weights & Biases will ask you to log in so you can have access to the visualizations and the logging of the runs. You will be prompted to pick an option about how to use W&B, and logging in will subsequently require your W&B API key. It might be more practical for you to already finish this setup before starting the training runs with this option. You can read [here](https://docs.wandb.ai/ref/cli/wandb-login) how to do that from the command line. Creating an account before this step is necessary. 
 
@@ -289,9 +289,14 @@ python train/SL/train_vlstm_guesser_only.py \
 
 ##### LXMERT
 
-**Important: It is currently not possible (for us) to train LXMERT. The files provided by the authors require computational resources to load that we don't have access to. We are trying out strategies to solve this problem. We will most likely upload scripts that modify the data. If you don't have a problem of this sort, the command below might just work.**
+To train the model from scratch, add ```-from_scratch```. To use preloaded MS-COCO bottom-Up features add ```-preloaded```. If you don't train the model from scratch, you are using the pretrained version and you will need to download it. Please follow the steps below.  
 
-To train the model from scratch, add ```-from_scratch```. To use preloaded MS-COCO bottom-Up features add ```-preloaded```. 
+```
+mkdir -p lxmert/snap/pretrained 
+wget http://nlp.cs.unc.edu/data/model_LXRT.pth -P snap/pretrained
+```
+
+To train, use the following command:
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
