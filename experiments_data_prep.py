@@ -60,9 +60,9 @@ def remove_raw_category_in_json(folder: str, which_set: str, out_dir: str, remov
             line = line.decode("utf-8")
             game = json.loads(line.strip('\n'))
             for object_id in game['objects']:
-                game['objects'][object_id]['category'] = ''
+                game['objects'][object_id]['category'] = 'no_category'
                 if remove_id:
-                    game['objects'][object_id]['category_id'] = 0
+                    game['objects'][object_id]['category_id'] = 1
             data = (json.dumps(line))
             out.write(json.loads(data).encode())
 
