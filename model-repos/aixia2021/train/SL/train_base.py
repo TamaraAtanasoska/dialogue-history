@@ -250,7 +250,7 @@ if __name__ == '__main__':
                         loss = guesser_loss + word_logits_loss + decider_loss/batch_size
 
                 if split == 'train':
-                    optimizer.zero_grad()
+                    optimizer.zero_grad(set_to_none=True)
                     loss.backward()
                     optimizer.step()
 
