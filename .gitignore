@@ -137,4 +137,6 @@ dmypy.json
 model-repos/guesswhat/data/
 model-repos/guesswhat/out/
 model-repos/aixia2021/bin/
+model-repos/aixia2021/data/
+model-repos/aixia2021/logs/
 

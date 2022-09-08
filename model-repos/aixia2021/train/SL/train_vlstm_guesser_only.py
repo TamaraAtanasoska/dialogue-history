@@ -102,7 +102,7 @@ if __name__ == '__main__':
     guesser_loss_function = nn.CrossEntropyLoss()
 
     # For Decider
-    decider_cross_entropy = nn.CrossEntropyLoss(size_average=False)
+    decider_cross_entropy = nn.CrossEntropyLoss(reduction='sum')
 
     # For QGen.
     _cross_entropy = nn.CrossEntropyLoss(ignore_index=0)
