@@ -16,7 +16,6 @@ from lxmert.src.lxrt.optimization import BertAdam
 from models.BERTEnsemble import BERTEnsemble
 from models.CNN import ResNet
 from train.SL.parser import preprocess_config
-from train.SL.vis import Visualise
 from utils.datasets.SL.N2NBERTDataset import N2NBERTDataset
 from utils.eval import calculate_accuracy
 from utils.wrap_var import to_var
@@ -118,14 +117,6 @@ if __name__ == '__main__':
     else:
         start_e = 0
         loss = 0
-
-    if exp_config['logging']:
-        exp_config['model_name'] = 'ensemble'
-        exp_config['model'] = str(model)
-        exp_config['train_dataset_len'] = str(len(dataset_train))
-        exp_config['valid_dataset_len'] = str(len(dataset_val))
-        exp_config['modulo'] = True if args.modulo > 1 else False
-        visualise = Visualise(**exp_config)
 
     for epoch in range(start_e, optimizer_args['no_epochs']):
         start = time()
@@ -249,19 +240,6 @@ if __name__ == '__main__':
 
                         train_total_loss = torch.cat([train_total_loss, loss.data])
 
-                        if exp_config['logging']:
-                            visualise.iteration_update(
-                                loss=loss.data[0],
-                                qgen_loss=word_logits_loss.data[0],
-                                guesser_loss=guesser_loss.data[0],
-                                decider_loss=decider_loss.data[0] / batch_size,
-                                ask_accuracy=ask_accuracy,
-                                guess_accuracy=guess_accuracy,
-                                guesser_accuracy=guesser_accuracy,
-                                training=True,
-                                modulo=args.modulo,
-                                epoch=epoch
-                            )
                     elif split == 'val':
                         validation_guesser_accuracy.append(guesser_accuracy)
                         validation_ask_accuracy.append(ask_accuracy)
@@ -270,20 +248,6 @@ if __name__ == '__main__':
                         val_guesser_loss = torch.cat([val_guesser_loss, guesser_loss.data])
 
                         val_total_loss = torch.cat([val_total_loss, loss.data])
-
-                        if exp_config['logging']:
-                            visualise.iteration_update(
-                                loss=loss.data[0],
-                                qgen_loss=word_logits_loss.data[0],
-                                guesser_loss=guesser_loss.data[0],
-                                decider_loss=decider_loss.data[0] / batch_size,
-                                ask_accuracy=ask_accuracy,
-                                guess_accuracy=guess_accuracy,
-                                guesser_accuracy=guesser_accuracy,
-                                training=False,
-                                modulo=args.modulo,
-                                epoch=epoch
-                            )
 
         #  and (epoch%args.modulo == 0)
         if exp_config['save_models']:
@@ -325,25 +289,3 @@ if __name__ == '__main__':
 
         if exp_config['save_models']:
             print("Saved model to %s" % (model_file))
-        print('-----------------------------------------------------------------')
-        if exp_config['logging']:
-            visualise.epoch_update(
-                train_loss=torch.mean(train_total_loss),
-                train_qgen_loss=torch.mean(train_qgen_loss),
-                train_guesser_loss=0 if (epoch % args.modulo != 0) else torch.mean(train_guesser_loss),
-                train_decider_loss=torch.mean(train_decision_loss),
-                train_ask_accuracy=ask_accuracy,
-                train_guess_accuracy=torch.mean(torch.stack(training_guess_accuracy)),
-                train_guesser_accuracy=0 if (epoch % args.modulo != 0) else torch.mean(
-                    torch.tensor(training_guesser_accuracy)),
-                valid_loss=torch.mean(val_total_loss),
-                valid_qgen_loss=torch.mean(val_qgen_loss),
-                valid_guesser_loss=0 if (epoch % args.modulo != 0) else torch.mean(val_guesser_loss),
-                valid_decider_loss=torch.mean(val_decision_loss),
-                valid_ask_accuracy=ask_accuracy,
-                valid_guess_accuracy=torch.mean(torch.stack(validation_guess_accuracy)),
-                valid_guesser_accuracy=0 if (epoch % args.modulo != 0) else torch.mean(
-                    torch.tensor(validation_guesser_accuracy)),
-                epoch=epoch,
-                modulo=args.modulo
-            )

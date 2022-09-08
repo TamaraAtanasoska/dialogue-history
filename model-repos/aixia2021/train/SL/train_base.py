@@ -16,7 +16,6 @@ from torch.utils.data import DataLoader
 from models.CNN import ResNet
 from models.Ensemble import Ensemble
 from train.SL.parser import preprocess_config
-from train.SL.vis import Visualise
 from utils.datasets.SL.N2NDataset import N2NDataset
 from utils.datasets.SL.N2NResNetDataset import N2NResNetDataset
 from utils.eval import calculate_accuracy
@@ -100,14 +99,6 @@ if __name__ == '__main__':
     else:
         dataset_train = N2NDataset(split='train', **dataset_args)
         dataset_val = N2NDataset(split='val', **dataset_args)
-
-    if exp_config['logging']:
-        exp_config['model_name'] = 'ensemble'
-        exp_config['model'] = str(model)
-        exp_config['train_dataset_len'] = str(len(dataset_train))
-        exp_config['valid_dataset_len'] = str(len(dataset_val))
-        exp_config['modulo'] = True if args.modulo>1 else False
-        visualise = Visualise(**exp_config)
 
     for epoch in range(optimizer_args['no_epochs']):
         start = time()
@@ -270,19 +261,6 @@ if __name__ == '__main__':
 
                     train_total_loss = torch.cat([train_total_loss, loss.data])
 
-                    if exp_config['logging']:
-                        visualise.iteration_update(
-                            loss=loss.data[0],
-                            qgen_loss=word_logits_loss.data[0],
-                            guesser_loss=guesser_loss.data[0],
-                            decider_loss=decider_loss.data[0]/batch_size,
-                            ask_accuracy=ask_accuracy,
-                            guess_accuracy=guess_accuracy,
-                            guesser_accuracy=guesser_accuracy,
-                            training=True,
-                            modulo=args.modulo,
-                            epoch=epoch
-                        )
                 elif split == 'val':
                     if epoch%args.modulo != 0:
                         val_qgen_loss = torch.cat([val_qgen_loss, word_logits_loss.data])
@@ -298,20 +276,6 @@ if __name__ == '__main__':
                         val_guesser_loss = torch.cat([val_guesser_loss, guesser_loss.data])
 
                     val_total_loss = torch.cat([val_total_loss, loss.data])
-
-                    if exp_config['logging']:
-                        visualise.iteration_update(
-                            loss=loss.data[0],
-                            qgen_loss=word_logits_loss.data[0],
-                            guesser_loss=guesser_loss.data[0],
-                            decider_loss=decider_loss.data[0]/batch_size,
-                            ask_accuracy=ask_accuracy,
-                            guess_accuracy=guess_accuracy,
-                            guesser_accuracy=guesser_accuracy,
-                            training=False,
-                            modulo= args.modulo,
-                            epoch= epoch
-                        )
 
         #  and (epoch%args.modulo == 0)
         if exp_config['save_models']:
@@ -330,24 +294,3 @@ if __name__ == '__main__':
             print("Validation Loss:: QGen %.3f, Decider %.3f, Guesser %.3f"%(torch.mean(val_qgen_loss), torch.mean(val_decision_loss), torch.mean(val_guesser_loss)))
             print("Training Accuracy:: Ask %.3f, Guess  %.3f, Guesser %.3f"%(np.mean(training_ask_accuracy), np.mean(training_guess_accuracy), np.mean(training_guesser_accuracy)))
             print("Validation Accuracy:: Ask %.3f, Guess  %.3f, Guesser %.3f"%(np.mean(validation_ask_accuracy), np.mean(validation_guess_accuracy), np.mean(validation_guesser_accuracy)))
-
-        print('-----------------------------------------------------------------')
-        if exp_config['logging']:
-            visualise.epoch_update(
-                train_loss=torch.mean(train_total_loss),
-                train_qgen_loss=torch.mean(train_qgen_loss),
-                train_guesser_loss=0 if (epoch%args.modulo != 0) else torch.mean(train_guesser_loss),
-                train_decider_loss=torch.mean(train_decision_loss),
-                train_ask_accuracy=np.mean(training_ask_accuracy),
-                train_guess_accuracy=np.mean(training_guess_accuracy),
-                train_guesser_accuracy=0 if (epoch%args.modulo != 0) else np.mean(training_guesser_accuracy),
-                valid_loss=torch.mean(val_total_loss),
-                valid_qgen_loss=torch.mean(val_qgen_loss),
-                valid_guesser_loss=0 if (epoch%args.modulo != 0) else torch.mean(val_guesser_loss),
-                valid_decider_loss=torch.mean(val_decision_loss),
-                valid_ask_accuracy=np.mean(validation_ask_accuracy),
-                valid_guess_accuracy=np.mean(validation_guess_accuracy),
-                valid_guesser_accuracy=0 if (epoch%args.modulo != 0) else np.mean(validation_guesser_accuracy),
-                epoch=epoch,
-                modulo=args.modulo
-            )

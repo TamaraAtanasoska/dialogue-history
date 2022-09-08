@@ -58,7 +58,6 @@
   "exp_config": {
     "name": "test experiment",
     "description": "experiment description",
-    "logging": true,
     "save_models": true,
     "save_models_path": "./bin/SL/",
     "tb_logdir": "./logs/SL/",
