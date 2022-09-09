@@ -15,8 +15,8 @@ def reverse_dialogues_in_json(folder: str, which_set: str, out_dir: str,
             line = line.decode("utf-8")
             game = json.loads(line.strip('\n'))
             game['qas'].reverse()
-            data = (json.dumps(line))
-            out.write(json.loads(data).encode())
+            out.write(json.dumps(game).encode())
+            out.write(b'\n')
 
 
 def remove_last_turn_from_dialogues_in_json(folder: str, which_set: str, out_dir: str,
@@ -30,8 +30,8 @@ def remove_last_turn_from_dialogues_in_json(folder: str, which_set: str, out_dir
             line = line.decode("utf-8")
             game = json.loads(line.strip('\n'))
             game['qas'] = game['qas'][:-1]
-            data = (json.dumps(line))
-            out.write(json.loads(data).encode())
+            out.write(json.dumps(game).encode())
+            out.write(b'\n')
 
 
 def shuffle_dialogues_in_json(folder: str, which_set: str, out_dir: str,
@@ -45,8 +45,8 @@ def shuffle_dialogues_in_json(folder: str, which_set: str, out_dir: str,
             line = line.decode("utf-8")
             game = json.loads(line.strip('\n'))
             random.shuffle(game['qas'])
-            data = (json.dumps(line))
-            out.write(json.loads(data).encode())
+            out.write(json.dumps(game).encode())
+            out.write(b'\n')
 
 
 def remove_raw_category_in_json(folder: str, which_set: str, out_dir: str, remove_id: Optional[bool] = True,
@@ -63,29 +63,26 @@ def remove_raw_category_in_json(folder: str, which_set: str, out_dir: str, remov
                 game['objects'][object_id]['category'] = 'no_category'
                 if remove_id:
                     game['objects'][object_id]['category_id'] = 1
-            data = (json.dumps(line))
-            out.write(json.loads(data).encode())
+            out.write(json.dumps(game).encode())
+            out.write(b'\n')
 
 
 def main():
     data_folder = "./model-repos/guesswhat/data"
     no_cat_no_id = "/experiments/no-category-no-id"
-    no_cat = "/experiments/no-category"
     for data_set in ['train', 'valid', 'test']:
         remove_raw_category_in_json(data_folder, data_set, data_folder + no_cat_no_id)
-        remove_raw_category_in_json(data_folder, data_set, data_folder + no_cat, remove_id=False)
 
     reverse_dialogues_in_json(data_folder, "test", data_folder + "/experiments")
     remove_last_turn_from_dialogues_in_json(data_folder, "test", data_folder + "/experiments")
     shuffle_dialogues_in_json(data_folder, "test", data_folder + "/experiments")
 
-    for name, address in [('_without_raw_category', no_cat),
-                          ('_without_raw_category_no_category_id', no_cat_no_id)]:
-        reverse_dialogues_in_json(data_folder, "test",  data_folder, additional_name=name, additional_address=address)
-        remove_last_turn_from_dialogues_in_json(data_folder, "test",  data_folder,
-                                                additional_name=name,
-                                                additional_address=address)
-        shuffle_dialogues_in_json(data_folder, "test",  data_folder, additional_name=name, additional_address=address)
+    name = '_without_raw_category_no_category_id'
+    reverse_dialogues_in_json(data_folder, "test",  data_folder, additional_name=name, additional_address=no_cat_no_id)
+    remove_last_turn_from_dialogues_in_json(data_folder, "test",  data_folder,
+                                            additional_name=name,
+                                            additional_address=no_cat_no_id)
+    shuffle_dialogues_in_json(data_folder, "test",  data_folder, additional_name=name, additional_address=no_cat_no_id)
 
 
 if __name__ == '__main__':
