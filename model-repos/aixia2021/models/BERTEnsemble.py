@@ -60,7 +60,7 @@ def convert_sents_to_features_roberta(sents, max_seq_length, tokenizer):
         if not sent:
             sent = [""]
 
-        encodings = tokenizer.encode_plus(sent, add_special_tokens=True, max_length=max_seq_length)
+        encodings = tokenizer.encode_plus(sent, add_special_tokens=True, max_length=max_seq_length, truncation = True)
 
         input_ids = encodings["input_ids"]
         input_mask = encodings["attention_mask"]
