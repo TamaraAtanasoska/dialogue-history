@@ -18,7 +18,6 @@ from lxmert.src.lxrt.optimization import BertAdam
 from models.CNN import ResNet
 from models.LXMERTEnsembleGuesserOnly import LXMERTEnsembleGuesserOnly
 from train.SL.parser import preprocess_config
-from train.SL.vis import Visualise
 from utils.datasets.SL.N2NLXMERTDataset import N2NLXMERTDataset
 from utils.eval import calculate_accuracy
 from utils.wrap_var import to_var
@@ -165,14 +164,6 @@ if __name__ == '__main__':
         start_e = 0
         loss = 0
 
-    if exp_config['logging']:
-        exp_config['model_name'] = 'ensemble'
-        exp_config['model'] = str(model)
-        exp_config['train_dataset_len'] = str(len(dataset_train))
-        exp_config['valid_dataset_len'] = str(len(dataset_val))
-        exp_config['modulo'] = True if args.modulo > 1 else False
-        visualise = Visualise(**exp_config)
-
     for epoch in range(start_e, optimizer_args['no_epochs']):
         start = time()
         print('epoch', epoch)
@@ -281,18 +272,6 @@ if __name__ == '__main__':
                     train_guesser_loss = torch.cat([train_guesser_loss, guesser_loss.data])
                     train_total_loss = torch.cat([train_total_loss, loss.data])
 
-                    if exp_config['logging']:
-                        visualise.iteration_update(
-                            loss=loss.data[0],
-                            qgen_loss=0,
-                            guesser_loss=guesser_loss.data[0],
-                            decider_loss=decider_loss.data[0] / batch_size,
-                            ask_accuracy=0,
-                            guess_accuracy=guess_accuracy,
-                            guesser_accuracy=guesser_accuracy,
-                            training=True,
-                            epoch=epoch
-                        )
                 elif split == 'val':
                     validation_guesser_accuracy.append(guesser_accuracy)
                     validation_guess_accuracy.append(guess_accuracy)
@@ -300,19 +279,6 @@ if __name__ == '__main__':
                     val_guesser_loss = torch.cat([val_guesser_loss, guesser_loss.data])
 
                     val_total_loss = torch.cat([val_total_loss, loss.data])
-
-                    if exp_config['logging']:
-                        visualise.iteration_update(
-                            loss=loss.data[0],
-                            qgen_loss=0,
-                            guesser_loss=guesser_loss.data[0],
-                            decider_loss=decider_loss.data[0] / batch_size,
-                            ask_accuracy=0,
-                            guess_accuracy=guess_accuracy,
-                            guesser_accuracy=guesser_accuracy,
-                            training=False,
-                            epoch=epoch
-                        )
 
         if exp_config['save_models']:
             model_file = os.path.join(model_dir, ''.join(['model_ensemble_', args.bin_name, '_E_', str(epoch)]))
@@ -341,23 +307,3 @@ if __name__ == '__main__':
 
         if exp_config['save_models']:
             print("Saved model to %s" % (model_file))
-
-        print('-----------------------------------------------------------------')
-        if exp_config['logging']:
-            visualise.epoch_update(
-                train_loss=torch.mean(train_total_loss),
-                train_qgen_loss=torch.Tensor([0]),
-                train_guesser_loss=0 if (epoch % args.modulo != 0) else torch.mean(train_guesser_loss),
-                train_decider_loss=torch.mean(train_decision_loss),
-                train_ask_accuracy=torch.Tensor([0]),
-                train_guess_accuracy=torch.Tensor([0]),
-                train_guesser_accuracy=0 if (epoch % args.modulo != 0) else np.mean(training_guesser_accuracy),
-                valid_loss=torch.mean(val_total_loss),
-                valid_qgen_loss=torch.mean(val_qgen_loss),
-                valid_guesser_loss=0 if (epoch % args.modulo != 0) else torch.mean(val_guesser_loss),
-                valid_decider_loss=torch.mean(val_decision_loss),
-                valid_ask_accuracy=torch.Tensor([0]),
-                valid_guess_accuracy=torch.Tensor([0]),
-                valid_guesser_accuracy=0 if (epoch % args.modulo != 0) else np.mean(validation_guesser_accuracy),
-                epoch=epoch
-            )

@@ -27,7 +27,7 @@ def preprocess_config(args):
     ensemble_args : dict. Arguments for all the modules.
     dataset_args : dict. Arguments for Dataset
     optimizer_args : dict. Arghuments for the optimizer
-    exp_config : dict. Arguments for saving models, logging etc...
+    exp_config : dict. Arguments for saving models, etc...
 
     """
     # TODO Also load arguments for visualisation
@@ -101,8 +101,5 @@ def preprocess_config(args):
     # Optimizer_args
     optimizer_args = config['optimizer']
     optimizer_args['my_cpu'] = args.my_cpu
-
-    if exp_config['logging']:
-        exp_config['exp_name'] = args.exp_name
 
     return ensemble_args, dataset_args, optimizer_args, exp_config
