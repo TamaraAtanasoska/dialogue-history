@@ -23,6 +23,8 @@ import torch.nn as nn
 from lxmert.src.lxrt.modeling import LXRTFeatureExtraction as VisualBertForLXRFeature, VISUAL_CONFIG
 from lxmert.src.lxrt.tokenization import BertTokenizer
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 
 # from lxrt.tokenization import BertTokenizer
 # from lxrt.modeling import LXRTFeatureExtraction as VisualBertForLXRFeature, VISUAL_CONFIG
@@ -116,9 +118,9 @@ class LXRTEncoder(nn.Module):
         train_features = convert_sents_to_features(
             sents, self.max_seq_length, self.tokenizer)
 
-        input_ids = torch.tensor([f.input_ids for f in train_features], dtype=torch.long).cuda()
-        input_mask = torch.tensor([f.input_mask for f in train_features], dtype=torch.long).cuda()
-        segment_ids = torch.tensor([f.segment_ids for f in train_features], dtype=torch.long).cuda()
+        input_ids = torch.tensor([f.input_ids for f in train_features], dtype=torch.long, device=device)
+        input_mask = torch.tensor([f.input_mask for f in train_features], dtype=torch.long, device=device)
+        segment_ids = torch.tensor([f.segment_ids for f in train_features], dtype=torch.long, device=device)
 
         output = self.model(input_ids, segment_ids, input_mask,
                             visual_feats=feats,

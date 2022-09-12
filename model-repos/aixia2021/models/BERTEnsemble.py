@@ -4,6 +4,8 @@ from transformers import RobertaTokenizer, RobertaModel
 
 from models.Guesser import Guesser
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 
 class InputFeatures(object):
     """A single set of features of data."""
@@ -152,8 +154,8 @@ class BERTEnsemble(nn.Module):
 
         features = convert_sents_to_features_roberta(history_raw, self.max_seq_length, self.tokenizer)
 
-        input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long).cuda()
-        input_mask = torch.tensor([f.input_mask for f in features], dtype=torch.float).cuda()
+        input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long, device=device)
+        input_mask = torch.tensor([f.input_mask for f in features], dtype=torch.float, device=device)
         # segment_ids = torch.tensor([f.segment_ids for f in features], dtype=torch.long).cuda()
 
         # for cls:
