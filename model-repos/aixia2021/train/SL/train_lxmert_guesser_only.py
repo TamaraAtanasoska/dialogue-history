@@ -233,17 +233,17 @@ if __name__ == '__main__':
                 ask_accuracy = 0
 
                 decider_out, guesser_out = model(
-                    src_q=sample['src_q'],
-                    tgt_len=sample['tgt_len'],
-                    visual_features=avg_img_features,
-                    spatials=sample['spatials'],
-                    objects=sample['objects'],
-                    target_cat=sample['target_cat'],
+                    src_q=sample['src_q'].to(device),
+                    tgt_len=sample['tgt_len'].to(device),
+                    visual_features=avg_img_features.to(device),
+                    spatials=sample['spatials'].to(device),
+                    objects=sample['objects'].to(device),
+                    target_cat=sample['target_cat'].to(device),
                     history_raw=sample["history_raw"],
-                    fasterrcnn_features=sample["FasterRCNN"]["features"],
-                    fasterrcnn_boxes=sample["FasterRCNN"]["boxes"],
-                    history=sample["history"],
-                    history_len=sample["history_len"]
+                    fasterrcnn_features=sample["FasterRCNN"]["features"].to(device),
+                    fasterrcnn_boxes=sample["FasterRCNN"]["boxes"].to(device),
+                    history=sample["history"].to(device),
+                    history_len=sample["history_len"].to(device)
                 )
 
                 decider_loss += ensemble_args['decider']['guess_weight'] * decider_cross_entropy(decider_out.squeeze(1),
