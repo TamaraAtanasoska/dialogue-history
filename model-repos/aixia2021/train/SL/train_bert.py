@@ -146,7 +146,7 @@ if __name__ == '__main__':
                 batch_size=optimizer_args['batch_size'],
                 shuffle=True,
                 pin_memory=True if device.type == 'cuda' else False,
-                drop_last=False,
+                drop_last=True,
                 num_workers=0
             )
 

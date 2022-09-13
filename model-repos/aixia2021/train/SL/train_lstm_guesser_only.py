@@ -139,7 +139,7 @@ if __name__ == '__main__':
                 dataset=dataset,
                 batch_size=optimizer_args['batch_size'],
                 shuffle=True,
-                drop_last=False,
+                drop_last=True,
                 pin_memory=use_cuda,
                 num_workers=0
             )
