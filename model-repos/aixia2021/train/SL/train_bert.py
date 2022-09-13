@@ -5,6 +5,7 @@ import os
 from shutil import copy2
 from time import time
 
+import numpy as np
 import torch
 import torch.nn as nn
 import tqdm
@@ -94,9 +95,6 @@ if __name__ == '__main__':
     # For Decider
     decider_cross_entropy = nn.CrossEntropyLoss(reduction='sum')
 
-    # For QGen.
-    _cross_entropy = nn.CrossEntropyLoss(ignore_index=0)
-
     dataset_train = N2NBERTDataset(split='train', add_sep=False, complete_only=True, **dataset_args,
                                    num_turns=args.num_turns)
     dataset_val = N2NBERTDataset(split='val', add_sep=False, complete_only=True, **dataset_args,
@@ -126,8 +124,6 @@ if __name__ == '__main__':
         # Logging
         train_decision_loss = float_tensor()
         val_decision_loss = float_tensor()
-        train_qgen_loss = float_tensor()
-        val_qgen_loss = float_tensor()
         train_guesser_loss = float_tensor()
         val_guesser_loss = float_tensor()
         train_total_loss = float_tensor()
@@ -136,9 +132,7 @@ if __name__ == '__main__':
         training_guesser_accuracy = list()
         validation_guesser_accuracy = list()
         training_ask_accuracy = list()
-        training_guess_accuracy = list()
         validation_ask_accuracy = list()
-        validation_guess_accuracy = list()
 
         for split, dataset in zip(exp_config['splits'], [dataset_train, dataset_val]):
             dataloader = DataLoader(
@@ -235,7 +229,6 @@ if __name__ == '__main__':
                         # Logging variables
                         training_guesser_accuracy.append(guesser_accuracy)
                         training_ask_accuracy.append(ask_accuracy)
-                        training_guess_accuracy.append(guess_accuracy)
                         train_decision_loss = torch.cat([train_decision_loss, decider_loss.data / batch_size])
                         train_guesser_loss = torch.cat([train_guesser_loss, guesser_loss.data])
 
@@ -244,13 +237,11 @@ if __name__ == '__main__':
                     elif split == 'val':
                         validation_guesser_accuracy.append(guesser_accuracy)
                         validation_ask_accuracy.append(ask_accuracy)
-                        validation_guess_accuracy.append(guess_accuracy)
                         val_decision_loss = torch.cat([val_decision_loss, decider_loss.data / batch_size])
                         val_guesser_loss = torch.cat([val_guesser_loss, guesser_loss.data])
 
                         val_total_loss = torch.cat([val_total_loss, loss.data])
 
-        #  and (epoch%args.modulo == 0)
         if exp_config['save_models']:
             model_file = os.path.join(model_dir, ''.join(['model_ensemble_', args.bin_name, '_E_', str(epoch)]))
             torch.save({
@@ -260,33 +251,19 @@ if __name__ == '__main__':
                 'loss': loss,
             }, model_file)
 
-        if epoch % args.modulo != 0:
-            print("Epoch %03d, Time taken %.3f, Total Training Loss %.4f, Total Validation Loss %.4f" % (
-                epoch, time() - start, torch.mean(train_total_loss), torch.mean(val_total_loss)))
-            print("Training Loss:: QGen %.3f, Decider %.3f" % (
-                torch.mean(train_qgen_loss), torch.mean(train_decision_loss)))
-            print("Validation Loss:: QGen %.3f, Decider %.3f" % (
-                torch.mean(val_qgen_loss), torch.mean(val_decision_loss)))
+        print('Epoch %03d, Time taken %.3f, Total Training Loss %.4f, Total Validation Loss %.4f' % (
+        epoch, time() - start, torch.mean(train_total_loss), torch.mean(val_total_loss)))
+        print('Validation Loss:: Decider %.3f, Guesser %.3f' % (
+        torch.mean(val_decision_loss), torch.mean(val_guesser_loss)))
+        print('Training Accuracy:: Guesser %.3f' % (np.mean(training_guesser_accuracy)))
+        print('Validation Accuracy::  Guesser %.3f' % (np.mean(validation_guesser_accuracy)))
 
-        else:
-            print("Epoch %03d, Time taken %.3f, Total Training Loss %.4f, Total Validation Loss %.4f"
-                  % (epoch, time() - start, torch.mean(train_total_loss), torch.mean(val_total_loss)))
-            print("Training Loss:: QGen %.3f, Decider %.3f, Guesser %.3f" % (
-                torch.mean(train_qgen_loss), torch.mean(train_decision_loss), torch.mean(train_guesser_loss)))
-            print("Validation Loss:: QGen %.3f, Decider %.3f, Guesser %.3f" % (
-                torch.mean(val_qgen_loss), torch.mean(val_decision_loss), torch.mean(val_guesser_loss)))
-            print('Training Accuracy:: Guess  %.3f, Guesser %.3f' % (
-                torch.mean(torch.stack(training_guess_accuracy)), torch.mean(torch.tensor(training_guesser_accuracy))))
-            print('Validation Accuracy:: Guess  %.3f, Guesser %.3f' % (
-                torch.mean(torch.stack(validation_guess_accuracy)),
-                torch.mean(torch.tensor(validation_guesser_accuracy))))
-
-            if args.exp_tracker is not None:
-                wandb.log({'Guesser Training Loss': torch.mean(train_guesser_loss),
-                           'Guesser Validation Loss': torch.mean(val_guesser_loss),
-                           'Guesser Training Accuracy': torch.mean(torch.tensor(training_guesser_accuracy)),
-                           'Guesser Validation Accuracy': torch.mean(torch.tensor(validation_guesser_accuracy)),
-                           })
+        if args.exp_tracker is not None:
+            wandb.log({'Guesser Training Loss': torch.mean(train_guesser_loss),
+                       'Guesser Validation Loss': torch.mean(val_guesser_loss),
+                       'Guesser Training Accuracy': torch.mean(torch.tensor(training_guesser_accuracy)),
+                       'Guesser Validation Accuracy': torch.mean(torch.tensor(validation_guesser_accuracy)),
+                       })
 
         if exp_config['save_models']:
-            print("Saved model to %s" % (model_file))
+            print('Saved model to %s' % (model_file))
