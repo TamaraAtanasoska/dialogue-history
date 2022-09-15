@@ -145,6 +145,7 @@ if __name__ == "__main__":
         dataset_val = N2NDataset(
             split="val", **dataset_args, complete_only=True, num_turns=args.num_turns
         )
+    val_accuracies = []
 
     for epoch in range(start_e, optimizer_args["no_epochs"]):
         start = time()
@@ -293,6 +294,7 @@ if __name__ == "__main__":
             "Validation Accuracy::  Guesser %.3f"
             % (np.mean(validation_guesser_accuracy))
         )
+        val_accuracies.append(np.mean(validation_guesser_accuracy))
 
         if args.exp_tracker is not None:
             wandb.log(
@@ -310,3 +312,10 @@ if __name__ == "__main__":
 
         if exp_config["save_models"]:
             print("Saved model to %s" % (model_file))
+
+    best_epoch = np.argmax(val_accuracies)
+    best_model_file = os.path.join(
+        model_dir,
+        "".join(["model_ensemble_", args.bin_name, "_E_", str(best_epoch)]),
+    )
+    print(f'Best model: {best_model_file}')
