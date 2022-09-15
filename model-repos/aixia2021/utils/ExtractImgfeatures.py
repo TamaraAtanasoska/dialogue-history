@@ -43,6 +43,51 @@ def extract_features(img_dir, model, img_list, my_cpu=False):
 
     return avg_img_features, name2id
 
+def get_image_data(n2n_file):
+    data = []
+    with open(n2n_file, "r") as file_v:
+        n2n_data = json.load(file_v)
+    for k, v in n2n_data.items():
+        data.append(v["image_file"])
+    return data
+
+def create_image_features(image_dir, n2n_train_set, n2n_val_set, n2n_test_set, image_features_json_path, image_features_path):
+    start = time()
+    print("Start")
+    splits = ["train", "val", "test"]
+
+    my_cpu = False
+
+    images = {"train": [], "val": [], "test": []}
+
+    images['train'] = get_image_data(n2n_train_set)
+    images['val'] = get_image_data(n2n_val_set)
+    images['test'] = get_image_data(n2n_test_set)
+
+    model = ResNet()
+    model = model.eval()
+    if torch.cuda.is_available():
+        model = model.cuda()
+
+    feat_h5_file = h5py.File(image_features_path, "w")
+    json_data = dict()
+    for split in splits:
+        print(split)
+        avg_img_features, name2id = extract_features(
+            image_dir, model, img_list=images[split], my_cpu=my_cpu
+        )
+        feat_h5_file.create_dataset(
+            name=split + "_img_features", dtype="float32", data=avg_img_features
+        )
+        json_data[split + "2id"] = name2id
+    feat_h5_file.close()
+
+    with open(image_features_json_path, "w") as f:
+        json.dump(json_data, f)
+
+    print("Image Features extracted.")
+    print("Time taken: ", time() - start)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -59,6 +104,9 @@ if __name__ == "__main__":
         "-n2n_val_set", type=str, default="data/n2n_val_successful_data.json"
     )
     parser.add_argument(
+        "-n2n_test_set", type=str, default="data/n2n_test_successful_data.json"
+    )
+    parser.add_argument(
         "-image_features_json_path",
         type=str,
         default="data/ResNet_avg_image_features2id.json",
@@ -67,48 +115,4 @@ if __name__ == "__main__":
         "-image_features_path", type=str, default="data/ResNet_avg_image_features.h5"
     )
     args = parser.parse_args()
-    start = time()
-    print("Start")
-    splits = ["train", "val"]
-
-    my_cpu = False
-    # TODO: Remove these hard coded parts
-    """if my_cpu:
-        img_dir = '/home/aashigpu/TEST_CARTESIUS/avenkate/N2N/data/'
-    else:
-        img_dir = 'data/images/"""
-
-    with open(args.n2n_train_set, "r") as file_v:
-        n2n_data = json.load(file_v)
-    images = {"train": [], "val": []}
-    for k, v in n2n_data.items():
-        images["train"].append(v["image_file"])
-
-    with open(args.n2n_val_set, "r") as file_v:
-        n2n_data = json.load(file_v)
-    for k, v in n2n_data.items():
-        images["val"].append(v["image_file"])
-
-    model = ResNet()
-    model = model.eval()
-    if torch.cuda.is_available():
-        model = model.cuda()
-
-    feat_h5_file = h5py.File(args.image_features_path, "w")
-    json_data = dict()
-    for split in splits:
-        print(split)
-        avg_img_features, name2id = extract_features(
-            args.image_dir, model, img_list=images[split], my_cpu=my_cpu
-        )
-        feat_h5_file.create_dataset(
-            name=split + "_img_features", dtype="float32", data=avg_img_features
-        )
-        json_data[split + "2id"] = name2id
-    feat_h5_file.close()
-
-    with open(args.image_features_json_path, "w") as f:
-        json.dump(json_data, f)
-
-    print("Image Features extracted.")
-    print("Time taken: ", time() - start)
+    create_image_features(**vars(args))
