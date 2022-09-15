@@ -9,6 +9,7 @@ from guesswhat.models.qgen.qgen_beamsearch_wrapper import QGenBSWrapper
 # Implementation of sampling was updated for speed reason while eam search rely ion legacy code
 # Therefore, their internal implementation differs. that iw why we put a wrapper to hide technical detail in the looper
 
+
 class QGenWrapper(object):
     def __init__(self, qgen, tokenizer, max_length, k_best):
 
@@ -27,9 +28,13 @@ class QGenWrapper(object):
     def sample_next_question(self, sess, prev_answers, game_data, mode):
 
         if mode == "sampling":
-            return self.sampling_wrapper.sample_next_question(sess, prev_answers, game_data, greedy=False)
+            return self.sampling_wrapper.sample_next_question(
+                sess, prev_answers, game_data, greedy=False
+            )
         elif mode == "greedy":
-            return self.sampling_wrapper.sample_next_question(sess, prev_answers, game_data, greedy=True)
+            return self.sampling_wrapper.sample_next_question(
+                sess, prev_answers, game_data, greedy=True
+            )
         elif mode == "beam_search":
             return self.bs_wrapper.sample_next_question(sess, prev_answers, game_data)
         else:
@@ -55,7 +60,7 @@ class QGenUserWrapper(object):
 
         print()
         while True:
-            question = input('Q: ')
+            question = input("Q: ")
             if question != "":
                 break
 
@@ -65,8 +70,8 @@ class QGenUserWrapper(object):
 
         # Stop the question (add stop token)
         else:
-            question = re.sub('\?', '', question) # remove question tags if exist
-            question +=  " ?"
+            question = re.sub("\?", "", question)  # remove question tags if exist
+            question += " ?"
             tokens = self.tokenizer.apply(question)
 
         return [tokens], np.array([tokens]), [len(tokens)]

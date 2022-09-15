@@ -6,7 +6,7 @@ from generic.tf_utils.abstract_network import AbstractNetwork
 
 
 class GuesserNetwork(AbstractNetwork):
-    def __init__(self, config, num_words, device='', reuse=False):
+    def __init__(self, config, num_words, device="", reuse=False):
         AbstractNetwork.__init__(self, "guesser", device=device)
 
         mini_batch_size = None
@@ -14,62 +14,91 @@ class GuesserNetwork(AbstractNetwork):
         with tf.variable_scope(self.scope_name, reuse=reuse):
 
             # Dialogues
-            self.dialogues = tf.placeholder(tf.int32, [mini_batch_size, None], name='dialogues')
-            self.seq_length = tf.placeholder(tf.int32, [mini_batch_size], name='seq_length')
+            self.dialogues = tf.placeholder(
+                tf.int32, [mini_batch_size, None], name="dialogues"
+            )
+            self.seq_length = tf.placeholder(
+                tf.int32, [mini_batch_size], name="seq_length"
+            )
 
             # Objects
-            self.obj_mask = tf.placeholder(tf.float32, [mini_batch_size, None], name='obj_mask')
-            self.obj_cats = tf.placeholder(tf.int32, [mini_batch_size, None], name='obj_cats')
-            self.obj_spats = tf.placeholder(tf.float32, [mini_batch_size, None, config['spat_dim']], name='obj_spats')
+            self.obj_mask = tf.placeholder(
+                tf.float32, [mini_batch_size, None], name="obj_mask"
+            )
+            self.obj_cats = tf.placeholder(
+                tf.int32, [mini_batch_size, None], name="obj_cats"
+            )
+            self.obj_spats = tf.placeholder(
+                tf.float32,
+                [mini_batch_size, None, config["spat_dim"]],
+                name="obj_spats",
+            )
 
             # Targets
-            self.targets = tf.placeholder(tf.int32, [mini_batch_size], name="targets_index")
+            self.targets = tf.placeholder(
+                tf.int32, [mini_batch_size], name="targets_index"
+            )
 
             self.object_cats_emb = utils.get_embedding(
                 self.obj_cats,
-                config['no_categories'] + 1,
-                config['cat_emb_dim'],
-                scope='cat_embedding')
+                config["no_categories"] + 1,
+                config["cat_emb_dim"],
+                scope="cat_embedding",
+            )
 
-            self.objects_input = tf.concat([self.object_cats_emb, self.obj_spats], axis=2)
-            self.flat_objects_inp = tf.reshape(self.objects_input, [-1, config['cat_emb_dim'] + config['spat_dim']])
+            self.objects_input = tf.concat(
+                [self.object_cats_emb, self.obj_spats], axis=2
+            )
+            self.flat_objects_inp = tf.reshape(
+                self.objects_input, [-1, config["cat_emb_dim"] + config["spat_dim"]]
+            )
 
-            with tf.variable_scope('obj_mlp'):
+            with tf.variable_scope("obj_mlp"):
                 h1 = utils.fully_connected(
                     self.flat_objects_inp,
-                    n_out=config['obj_mlp_units'],
-                    activation='relu',
-                    scope='l1')
+                    n_out=config["obj_mlp_units"],
+                    activation="relu",
+                    scope="l1",
+                )
                 h2 = utils.fully_connected(
-                    h1,
-                    n_out=config['dialog_emb_dim'],
-                    activation='relu',
-                    scope='l2')
+                    h1, n_out=config["dialog_emb_dim"], activation="relu", scope="l2"
+                )
 
-            obj_embs = tf.reshape(h2, [-1, tf.shape(self.obj_cats)[1], config['dialog_emb_dim']])
+            obj_embs = tf.reshape(
+                h2, [-1, tf.shape(self.obj_cats)[1], config["dialog_emb_dim"]]
+            )
 
             # Compute the word embedding
-            input_words = utils.get_embedding(self.dialogues,
-                                              n_words=num_words,
-                                              n_dim=config['word_emb_dim'],
-                                              scope="input_word_embedding")
+            input_words = utils.get_embedding(
+                self.dialogues,
+                n_words=num_words,
+                n_dim=config["word_emb_dim"],
+                scope="input_word_embedding",
+            )
 
-            last_states, _ = rnn.variable_length_LSTM(input_words,
-                                               num_hidden=config['num_lstm_units'],
-                                               seq_length=self.seq_length)
+            last_states, _ = rnn.variable_length_LSTM(
+                input_words,
+                num_hidden=config["num_lstm_units"],
+                seq_length=self.seq_length,
+            )
 
-            last_states = tf.reshape(last_states, [-1, config['num_lstm_units'], 1])
+            last_states = tf.reshape(last_states, [-1, config["num_lstm_units"], 1])
             scores = tf.matmul(obj_embs, last_states)
             scores = tf.reshape(scores, [-1, tf.shape(self.obj_cats)[1]])
 
             def masked_softmax(scores, mask):
                 # subtract max for stability
-                scores = scores - tf.tile(tf.reduce_max(scores, axis=(1,), keep_dims=True), [1, tf.shape(scores)[1]])
+                scores = scores - tf.tile(
+                    tf.reduce_max(scores, axis=(1,), keep_dims=True),
+                    [1, tf.shape(scores)[1]],
+                )
                 # compute padded softmax
                 exp_scores = tf.exp(scores)
                 exp_scores *= mask
                 exp_sum_scores = tf.reduce_sum(exp_scores, axis=1, keep_dims=True)
-                return exp_scores / tf.tile(exp_sum_scores, [1, tf.shape(exp_scores)[1]])
+                return exp_scores / tf.tile(
+                    exp_sum_scores, [1, tf.shape(exp_scores)[1]]
+                )
 
             self.softmax = masked_softmax(scores, self.obj_mask)
             self.selected_object = tf.argmax(self.softmax, axis=1)
@@ -81,10 +110,7 @@ class GuesserNetwork(AbstractNetwork):
         return self.loss
 
     def get_accuracy(self):
-        return 1. - self.error
-
-
-
+        return 1.0 - self.error
 
     # def find_object(self, sess, dialogue, seq_length, ground_data):
     #     """Inputs:

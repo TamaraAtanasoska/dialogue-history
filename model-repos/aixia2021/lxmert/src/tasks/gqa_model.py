@@ -13,16 +13,13 @@ MAX_GQA_LENGTH = 20
 class GQAModel(nn.Module):
     def __init__(self, num_answers):
         super().__init__()
-        self.lxrt_encoder = LXRTEncoder(
-            args,
-            max_seq_length=MAX_GQA_LENGTH
-        )
+        self.lxrt_encoder = LXRTEncoder(args, max_seq_length=MAX_GQA_LENGTH)
         hid_dim = self.lxrt_encoder.dim
         self.logit_fc = nn.Sequential(
             nn.Linear(hid_dim, hid_dim * 2),
             GeLU(),
             BertLayerNorm(hid_dim * 2, eps=1e-12),
-            nn.Linear(hid_dim * 2, num_answers)
+            nn.Linear(hid_dim * 2, num_answers),
         )
         self.logit_fc.apply(self.lxrt_encoder.model.init_bert_weights)
 
@@ -40,5 +37,3 @@ class GQAModel(nn.Module):
         logit = self.logit_fc(x)
 
         return logit
-
-

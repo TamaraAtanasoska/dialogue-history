@@ -7,6 +7,7 @@ from tensorflow.contrib import layers as layers_lib
 from tensorflow.contrib.framework.python.ops import arg_scope
 import os
 
+
 def get_resnet_arg_scope(bn_fn):
     """
     Trick to apply CBN from a pretrained tf network. It overides the batchnorm constructor with cbn
@@ -15,14 +16,17 @@ def get_resnet_arg_scope(bn_fn):
     """
 
     with arg_scope(
-            [layers_lib.conv2d],
-            activation_fn=tf.nn.relu,
-            normalizer_fn=bn_fn,
-            normalizer_params=None) as arg_sc:
+        [layers_lib.conv2d],
+        activation_fn=tf.nn.relu,
+        normalizer_fn=bn_fn,
+        normalizer_params=None,
+    ) as arg_sc:
         return arg_sc
 
 
-def create_resnet(image_input, is_training, scope="", resnet_out="block4", resnet_version=50, cbn=None):
+def create_resnet(
+    image_input, is_training, scope="", resnet_out="block4", resnet_version=50, cbn=None
+):
     """
     Create a resnet by overidding the classic batchnorm with conditional batchnorm
     :param image_input: placeholder with image
@@ -51,10 +55,12 @@ def create_resnet(image_input, is_training, scope="", resnet_out="block4", resne
     else:
         raise ValueError("Unsupported resnet version")
 
-    resnet_scope = os.path.join('resnet_v1_{}/'.format(resnet_version), resnet_out)
+    resnet_scope = os.path.join("resnet_v1_{}/".format(resnet_version), resnet_out)
 
     with slim.arg_scope(arg_sc):
-        net, end_points = current_resnet(image_input, 1000)  # 1000 is the number of softmax class
+        net, end_points = current_resnet(
+            image_input, 1000
+        )  # 1000 is the number of softmax class
 
     if len(scope) > 0 and not scope.endswith("/"):
         scope += "/"

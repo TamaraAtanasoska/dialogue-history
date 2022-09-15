@@ -9,10 +9,12 @@ Guesser
 
 use_cuda = torch.cuda.is_available()
 
+
 class Guesser(nn.Module):
     """
     Assumption that encoder hidden is given which is then used for dot product with other elements.
     """
+
     def __init__(self, **kwargs):
         """
         Parameters
@@ -28,7 +30,11 @@ class Guesser(nn.Module):
 
         self.guesser_args = kwargs
 
-        self.obj_categories_embedding = nn.Embedding(self.guesser_args['no_categories'], self.guesser_args['obj_categories_embedding_dim'], padding_idx=self.guesser_args['obj_pad_token'])
+        self.obj_categories_embedding = nn.Embedding(
+            self.guesser_args["no_categories"],
+            self.guesser_args["obj_categories_embedding_dim"],
+            padding_idx=self.guesser_args["obj_pad_token"],
+        )
 
         self.tanh = nn.Tanh()
 
@@ -36,11 +42,11 @@ class Guesser(nn.Module):
 
         self.mlp = nn.Sequential()
 
-        layer_sizes = self.guesser_args['layer_sizes']
+        layer_sizes = self.guesser_args["layer_sizes"]
 
         idx = 0
-        for i in range(len(layer_sizes) -1):
-            self.mlp.add_module(str(idx), nn.Linear(layer_sizes[i], layer_sizes[i+1]))
+        for i in range(len(layer_sizes) - 1):
+            self.mlp.add_module(str(idx), nn.Linear(layer_sizes[i], layer_sizes[i + 1]))
             idx += 1
             self.mlp.add_module(str(idx), nn.ReLU())
             idx += 1
@@ -64,22 +70,24 @@ class Guesser(nn.Module):
             'logits' : log softmax of the predictions made by Guesser
 
         """
-        regress = kwargs['regress']
+        regress = kwargs["regress"]
         # Not used in the NAACL'19 paper
         if regress:
-            target_cat = kwargs['target_cat']
+            target_cat = kwargs["target_cat"]
             return self.obj_categories_embedding(target_cat)
-            #TODO add documentation for this. Regression not supported for now.
+            # TODO add documentation for this. Regression not supported for now.
 
-        encoder_hidden = kwargs['encoder_hidden'].squeeze(1)
-        spatials = kwargs['spatials']
-        objects = kwargs['objects']
+        encoder_hidden = kwargs["encoder_hidden"].squeeze(1)
+        spatials = kwargs["spatials"]
+        objects = kwargs["objects"]
 
         batch_size = encoder_hidden.size(0)
 
         objects_embedding = self.obj_categories_embedding(objects)
 
-        mlp_in = torch.cat([objects_embedding, spatials.float()], dim=2).view(-1, self.guesser_args['obj_categories_embedding_dim'] + 8)
+        mlp_in = torch.cat([objects_embedding, spatials.float()], dim=2).view(
+            -1, self.guesser_args["obj_categories_embedding_dim"] + 8
+        )
 
         mlp_out = self.mlp(mlp_in)
 

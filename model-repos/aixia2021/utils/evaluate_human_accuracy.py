@@ -13,6 +13,7 @@ from train.SL.parser import preprocess_config
 from utils.datasets.SL.N2NDataset import N2NDataset
 from utils.eval import calculate_accuracy
 from utils.model_loading import load_model
+
 # TODO Make this capitalised everywhere to inform it is a global variable
 from utils.model_utils import get_number_parameters
 
@@ -20,10 +21,10 @@ use_cuda = torch.cuda.is_available()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-data_dir", type=str, default="data", help='Data Directory')
+    parser.add_argument("-data_dir", type=str, default="data", help="Data Directory")
     parser.add_argument("-config", type=str, default="config/SL/config_bert.json")
-    parser.add_argument("-my_cpu", action='store_true')
-    parser.add_argument("-breaking", action='store_true')
+    parser.add_argument("-my_cpu", action="store_true")
+    parser.add_argument("-breaking", action="store_true")
     parser.add_argument("-exp_name", type=str)
     parser.add_argument("-bin_name", type=str)
     parser.add_argument("-num_regions", type=int)
@@ -34,9 +35,9 @@ if __name__ == "__main__":
     ensemble_args, dataset_args, optimizer_args, exp_config = preprocess_config(args)
 
     float_tensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
-    torch.manual_seed(exp_config['seed'])
+    torch.manual_seed(exp_config["seed"])
     if use_cuda:
-        torch.cuda.manual_seed_all(exp_config['seed'])
+        torch.cuda.manual_seed_all(exp_config["seed"])
 
     model = Ensemble(**ensemble_args)
     print("Loading model: {}".format(args.load_bin_path))
@@ -55,7 +56,7 @@ if __name__ == "__main__":
 
         final_accuracies = []
 
-        dataset_test = N2NDataset(split='val', **dataset_args, complete_only=True)
+        dataset_test = N2NDataset(split="val", **dataset_args, complete_only=True)
         print("The dataset contains {} instances".format(len(dataset_test)))
 
         dataloader = DataLoader(
@@ -64,13 +65,15 @@ if __name__ == "__main__":
             shuffle=False,
             drop_last=False,
             pin_memory=use_cuda,
-            num_workers=0
+            num_workers=0,
         )
 
-        with open(os.path.join(args.data_dir, dataset_args['data_paths']['vocab_file'])) as file:
+        with open(
+            os.path.join(args.data_dir, dataset_args["data_paths"]["vocab_file"])
+        ) as file:
             vocab = json.load(file)
-        word2i = vocab['word2i']
-        i2word = vocab['i2word']
+        word2i = vocab["word2i"]
+        i2word = vocab["i2word"]
 
         softmax = nn.Softmax(dim=-1)
 
@@ -80,22 +83,26 @@ if __name__ == "__main__":
 
         for i_batch, sample in tqdm(enumerate(dataloader), total=len(dataloader)):
             if i_batch > 100 and args.breaking:
-                print('Breaking after processing 60 batch')
+                print("Breaking after processing 60 batch")
                 break
 
             _, guesser_out = model(
-                src_q=sample['src_q'],
-                tgt_len=sample['tgt_len'],
+                src_q=sample["src_q"],
+                tgt_len=sample["tgt_len"],
                 visual_features=sample["image"],
-                spatials=sample['spatials'],
-                objects=sample['objects'],
+                spatials=sample["spatials"],
+                objects=sample["objects"],
                 mask_select=1,
-                target_cat=sample['target_cat'],
+                target_cat=sample["target_cat"],
                 history=sample["history"],
-                history_len=sample['history_len']
+                history_len=sample["history_len"],
             )
 
-            accuracies_gt.append(calculate_accuracy(softmax(guesser_out), sample['target_obj'].reshape(-1).cuda()))
+            accuracies_gt.append(
+                calculate_accuracy(
+                    softmax(guesser_out), sample["target_obj"].reshape(-1).cuda()
+                )
+            )
 
             new_history = []
             for h in sample["history"]:
@@ -109,7 +116,7 @@ if __name__ == "__main__":
                         history_turns.append(new_h)
                         new_h = []
                         new_turn = False
-                    if token == word2i["?"] and indexes[token_index+1] in [5, 6, 7]:
+                    if token == word2i["?"] and indexes[token_index + 1] in [5, 6, 7]:
                         new_turn = True
 
                 new_history.append(history_turns)
@@ -123,23 +130,30 @@ if __name__ == "__main__":
                 for turn in history:
                     for token in turn:
                         utterance.append(token)
-                utterance.extend([word2i['<padding>']] * (sample["history"].shape[1] - len(utterance)))
+                utterance.extend(
+                    [word2i["<padding>"]]
+                    * (sample["history"].shape[1] - len(utterance))
+                )
                 new_shuffled_history.append(utterance)
             new_shuffled_history = torch.LongTensor(new_shuffled_history)
 
             _, guesser_out = model(
-                src_q=sample['src_q'],
-                tgt_len=sample['tgt_len'],
+                src_q=sample["src_q"],
+                tgt_len=sample["tgt_len"],
                 visual_features=sample["image"],
-                spatials=sample['spatials'],
-                objects=sample['objects'],
+                spatials=sample["spatials"],
+                objects=sample["objects"],
                 mask_select=1,
-                target_cat=sample['target_cat'],
+                target_cat=sample["target_cat"],
                 history=new_shuffled_history,
-                history_len=sample['history_len']
+                history_len=sample["history_len"],
             )
 
-            accuracies_shuffled.append(calculate_accuracy(softmax(guesser_out), sample['target_obj'].reshape(-1).cuda()))
+            accuracies_shuffled.append(
+                calculate_accuracy(
+                    softmax(guesser_out), sample["target_obj"].reshape(-1).cuda()
+                )
+            )
 
             # reversed_history = [list(reversed(x)) for x in new_history]
             #

@@ -10,16 +10,13 @@ from param import args
 class NLVR2Model(nn.Module):
     def __init__(self):
         super().__init__()
-        self.lxrt_encoder = LXRTEncoder(
-            args,
-            max_seq_length=20
-        )
+        self.lxrt_encoder = LXRTEncoder(args, max_seq_length=20)
         self.hid_dim = hid_dim = self.lxrt_encoder.dim
         self.logit_fc = nn.Sequential(
             nn.Linear(hid_dim * 2, hid_dim * 2),
             GeLU(),
             BertLayerNorm(hid_dim * 2, eps=1e-12),
-            nn.Linear(hid_dim * 2, 2)
+            nn.Linear(hid_dim * 2, 2),
         )
         self.logit_fc.apply(self.lxrt_encoder.model.init_bert_weights)
 
@@ -45,11 +42,9 @@ class NLVR2Model(nn.Module):
 
         # Extract feature --> Concat
         x = self.lxrt_encoder(sent, (feat, pos))
-        x = x.view(-1, self.hid_dim*2)
+        x = x.view(-1, self.hid_dim * 2)
 
         # Compute logit of answers
         logit = self.logit_fc(x)
 
         return logit
-
-

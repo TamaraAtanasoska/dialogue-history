@@ -7,8 +7,11 @@ from models.Guesser import Guesser
 """
 Putting all the models together
 """
+
+
 class EnsembleGuesserOnly(nn.Module):
     """docstring for Ensemble."""
+
     def __init__(self, **kwargs):
         super(EnsembleGuesserOnly, self).__init__()
         """Short summary.
@@ -28,11 +31,11 @@ class EnsembleGuesserOnly(nn.Module):
 
         # TODO: use get_attr to get different versions of the same model. For example QGen
 
-        self.encoder = Encoder(**self.ensemble_args['encoder'])
+        self.encoder = Encoder(**self.ensemble_args["encoder"])
 
-        self.guesser = Guesser(**self.ensemble_args['guesser'])
+        self.guesser = Guesser(**self.ensemble_args["guesser"])
 
-        self.decider = Decider(**self.ensemble_args['decider'])
+        self.decider = Decider(**self.ensemble_args["decider"])
 
         self.dropout = nn.Dropout(p=0.5)
 
@@ -59,13 +62,20 @@ class EnsembleGuesserOnly(nn.Module):
             'qgen_out' : predicted next question
 
         """
-        history, history_len = kwargs['history'], kwargs['history_len']
-        visual_features = self.dropout(kwargs['visual_features'])
-        spatials = kwargs['spatials']
-        objects = kwargs['objects']
+        history, history_len = kwargs["history"], kwargs["history_len"]
+        visual_features = self.dropout(kwargs["visual_features"])
+        spatials = kwargs["spatials"]
+        objects = kwargs["objects"]
 
-        encoder_hidden = self.encoder(history=history, history_len=history_len, visual_features=visual_features)
+        encoder_hidden = self.encoder(
+            history=history, history_len=history_len, visual_features=visual_features
+        )
         decider_out = self.decider(encoder_hidden=encoder_hidden)
-        guesser_out = self.guesser(encoder_hidden= encoder_hidden, spatials= spatials, objects= objects, regress= False)
+        guesser_out = self.guesser(
+            encoder_hidden=encoder_hidden,
+            spatials=spatials,
+            objects=objects,
+            regress=False,
+        )
 
         return decider_out, guesser_out

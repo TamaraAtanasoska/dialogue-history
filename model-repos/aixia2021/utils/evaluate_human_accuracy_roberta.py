@@ -13,6 +13,7 @@ from train.SL.parser import preprocess_config
 from utils.datasets.SL.N2NBERTDataset import N2NBERTDataset
 from utils.eval import calculate_accuracy_all
 from utils.model_loading import load_model
+
 # TODO Make this capitalised everywhere to inform it is a global variable
 from utils.model_utils import get_number_parameters
 
@@ -20,10 +21,10 @@ use_cuda = torch.cuda.is_available()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-data_dir", type=str, default="data", help='Data Directory')
+    parser.add_argument("-data_dir", type=str, default="data", help="Data Directory")
     parser.add_argument("-config", type=str, default="config/SL/config_bert.json")
-    parser.add_argument("-my_cpu", action='store_true')
-    parser.add_argument("-breaking", action='store_true')
+    parser.add_argument("-my_cpu", action="store_true")
+    parser.add_argument("-breaking", action="store_true")
     parser.add_argument("-exp_name", type=str)
     parser.add_argument("-bin_name", type=str)
     parser.add_argument("-num_regions", type=int)
@@ -31,17 +32,17 @@ if __name__ == "__main__":
     parser.add_argument(
         "--load_mscoco_bottomup_index_json_filename",
         type=str,
-        default="/mnt/8tera/claudio.greco/guesswhat_lxmert/guesswhat/lxmert/data/mscoco_imgfeat/mscoco_bottomup_index.json"
+        default="/mnt/8tera/claudio.greco/guesswhat_lxmert/guesswhat/lxmert/data/mscoco_imgfeat/mscoco_bottomup_index.json",
     )
     parser.add_argument(
         "--load_mscoco_bottomup_features_npy_filename",
         type=str,
-        default="/mnt/8tera/claudio.greco/guesswhat_lxmert/guesswhat/lxmert/data/mscoco_imgfeat/save_mscoco_bottomup_features.npy"
+        default="/mnt/8tera/claudio.greco/guesswhat_lxmert/guesswhat/lxmert/data/mscoco_imgfeat/save_mscoco_bottomup_features.npy",
     )
     parser.add_argument(
         "--load_mscoco_bottomup_boxes_npy_filename",
         type=str,
-        default="/mnt/8tera/claudio.greco/guesswhat_lxmert/guesswhat/lxmert/data/mscoco_imgfeat/save_mscoco_bottomup_boxes.npy"
+        default="/mnt/8tera/claudio.greco/guesswhat_lxmert/guesswhat/lxmert/data/mscoco_imgfeat/save_mscoco_bottomup_boxes.npy",
     )
     args = parser.parse_args()
     print(args.exp_name)
@@ -49,9 +50,9 @@ if __name__ == "__main__":
     ensemble_args, dataset_args, optimizer_args, exp_config = preprocess_config(args)
 
     float_tensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
-    torch.manual_seed(exp_config['seed'])
+    torch.manual_seed(exp_config["seed"])
     if use_cuda:
-        torch.cuda.manual_seed_all(exp_config['seed'])
+        torch.cuda.manual_seed_all(exp_config["seed"])
 
     model = BERTEnsemble(**ensemble_args)
     print("Loading model: {}".format(args.load_bin_path))
@@ -69,7 +70,9 @@ if __name__ == "__main__":
         for num_turn in [5]:
             print("NUM TURN: {}".format(num_turn))
 
-            dataset_test = N2NBERTDataset(split='test', add_sep=False, complete_only=True, **dataset_args)
+            dataset_test = N2NBERTDataset(
+                split="test", add_sep=False, complete_only=True, **dataset_args
+            )
             print("The dataset contains {} instances".format(len(dataset_test)))
 
             dataloader = DataLoader(
@@ -78,7 +81,7 @@ if __name__ == "__main__":
                 shuffle=False,
                 drop_last=False,
                 pin_memory=use_cuda,
-                num_workers=0
+                num_workers=0,
             )
 
             softmax = nn.Softmax(dim=-1)
@@ -88,9 +91,11 @@ if __name__ == "__main__":
             for turn_order in ["FWD"]:
                 print("Order: {}".format(turn_order))
 
-                for i_batch, sample in tqdm(enumerate(dataloader), total=len(dataloader)):
+                for i_batch, sample in tqdm(
+                    enumerate(dataloader), total=len(dataloader)
+                ):
                     if i_batch > 3 and args.breaking:
-                        print('Breaking after processing 60 batch')
+                        print("Breaking after processing 60 batch")
                         break
 
                     new_history_raw = []
@@ -106,7 +111,11 @@ if __name__ == "__main__":
                                 history_turns.append(new_h.strip())
                                 new_h = ""
                                 new_turn = False
-                            if token == "?" and tokens[token_index+1].lower() in ["yes", "no", "n/a"]:
+                            if token == "?" and tokens[token_index + 1].lower() in [
+                                "yes",
+                                "no",
+                                "n/a",
+                            ]:
                                 new_turn = True
                                 turn += 1
                         new_history_raw.append(history_turns)
@@ -115,21 +124,27 @@ if __name__ == "__main__":
                         # new_history_raw = [" ".join(x[:-1]) for x in new_history_raw]
                         new_history_raw = [" ".join(x) for x in new_history_raw]
                     elif turn_order == "BWD":
-                        new_history_raw = [" ".join(list(reversed(x))) for x in new_history_raw]
+                        new_history_raw = [
+                            " ".join(list(reversed(x))) for x in new_history_raw
+                        ]
                     elif turn_order == "SHUFFLE":
-                        new_history_raw = [" ".join(random.sample(x, len(x))) for x in new_history_raw]
+                        new_history_raw = [
+                            " ".join(random.sample(x, len(x))) for x in new_history_raw
+                        ]
 
                     guesser_out = model(
-                        src_q=sample['src_q'],
-                        tgt_len=sample['tgt_len'],
-                        spatials=sample['spatials'],
-                        objects=sample['objects'],
+                        src_q=sample["src_q"],
+                        tgt_len=sample["tgt_len"],
+                        spatials=sample["spatials"],
+                        objects=sample["objects"],
                         mask_select=1,
-                        target_cat=sample['target_cat'],
-                        history_raw=new_history_raw
+                        target_cat=sample["target_cat"],
+                        history_raw=new_history_raw,
                     )
 
-                    batch_accuracies = calculate_accuracy_all(softmax(guesser_out), sample['target_obj'].reshape(-1).cuda())
+                    batch_accuracies = calculate_accuracy_all(
+                        softmax(guesser_out), sample["target_obj"].reshape(-1).cuda()
+                    )
                     all_accuracies[turn_order].extend(batch_accuracies)
 
                     for game_index, game_id in enumerate(sample["game_id"]):

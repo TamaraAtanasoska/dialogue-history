@@ -13,7 +13,9 @@ def calculate_accuracy(predictions, targets):
         targets = targets.data
 
     predicted_classes = predictions.topk(1)[1].squeeze(1)
-    accuracy = torch.eq(predicted_classes, targets).sum().item()/float(targets.size(0))
+    accuracy = torch.eq(predicted_classes, targets).sum().item() / float(
+        targets.size(0)
+    )
     return accuracy
 
 
@@ -48,5 +50,5 @@ def calculate_accuracy_verbose(predictions, targets):
     predicted_classes = predicted_classes.squeeze()
     predicted_classes_probs = predicted_classes_probs.squeeze()
     guesses = torch.eq(predicted_classes, targets)
-    accuracy = guesses.sum().item()/float(targets.size(0))
+    accuracy = guesses.sum().item() / float(targets.size(0))
     return accuracy, guesses, predicted_classes_probs

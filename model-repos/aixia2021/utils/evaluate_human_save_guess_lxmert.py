@@ -19,10 +19,12 @@ use_cuda = torch.cuda.is_available()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-data_dir", type=str, default="data", help='Data Directory')
-    parser.add_argument("-config", type=str, default="config/SL/config_bert_scratch.json")
-    parser.add_argument("-my_cpu", action='store_true')
-    parser.add_argument("-breaking", action='store_true')
+    parser.add_argument("-data_dir", type=str, default="data", help="Data Directory")
+    parser.add_argument(
+        "-config", type=str, default="config/SL/config_bert_scratch.json"
+    )
+    parser.add_argument("-my_cpu", action="store_true")
+    parser.add_argument("-breaking", action="store_true")
     parser.add_argument("-exp_name", type=str)
     parser.add_argument("-bin_name", type=str)
     parser.add_argument("-num_regions", type=int)
@@ -30,17 +32,17 @@ if __name__ == "__main__":
     parser.add_argument(
         "--load_mscoco_bottomup_index_json_filename",
         type=str,
-        default="/mnt/8tera/claudio.greco/guesswhat_lxmert/guesswhat/lxmert/data/mscoco_imgfeat/mscoco_bottomup_index.json"
+        default="/mnt/8tera/claudio.greco/guesswhat_lxmert/guesswhat/lxmert/data/mscoco_imgfeat/mscoco_bottomup_index.json",
     )
     parser.add_argument(
         "--load_mscoco_bottomup_features_npy_filename",
         type=str,
-        default="/mnt/8tera/claudio.greco/guesswhat_lxmert/guesswhat/lxmert/data/mscoco_imgfeat/save_mscoco_bottomup_features.npy"
+        default="/mnt/8tera/claudio.greco/guesswhat_lxmert/guesswhat/lxmert/data/mscoco_imgfeat/save_mscoco_bottomup_features.npy",
     )
     parser.add_argument(
         "--load_mscoco_bottomup_boxes_npy_filename",
         type=str,
-        default="/mnt/8tera/claudio.greco/guesswhat_lxmert/guesswhat/lxmert/data/mscoco_imgfeat/save_mscoco_bottomup_boxes.npy"
+        default="/mnt/8tera/claudio.greco/guesswhat_lxmert/guesswhat/lxmert/data/mscoco_imgfeat/save_mscoco_bottomup_boxes.npy",
     )
     args = parser.parse_args()
     print(args.exp_name)
@@ -48,11 +50,15 @@ if __name__ == "__main__":
     ensemble_args, dataset_args, optimizer_args, exp_config = preprocess_config(args)
 
     float_tensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
-    torch.manual_seed(exp_config['seed'])
+    torch.manual_seed(exp_config["seed"])
     if use_cuda:
-        torch.cuda.manual_seed_all(exp_config['seed'])
+        torch.cuda.manual_seed_all(exp_config["seed"])
 
-    print("Loading MSCOCO bottomup index from: {}".format(dataset_args["FasterRCNN"]["mscoco_bottomup_index"]))
+    print(
+        "Loading MSCOCO bottomup index from: {}".format(
+            dataset_args["FasterRCNN"]["mscoco_bottomup_index"]
+        )
+    )
     with open(dataset_args["FasterRCNN"]["mscoco_bottomup_index"]) as in_file:
         mscoco_bottomup_index = json.load(in_file)
         image_id2image_pos = mscoco_bottomup_index["image_id2image_pos"]
@@ -60,16 +66,28 @@ if __name__ == "__main__":
         img_h = mscoco_bottomup_index["img_h"]
         img_w = mscoco_bottomup_index["img_w"]
 
-    print("Loading MSCOCO bottomup features from: {}".format(dataset_args["FasterRCNN"]["mscoco_bottomup_features"]))
-    mscoco_bottomup_features = np.load(dataset_args["FasterRCNN"]["mscoco_bottomup_features"])
+    print(
+        "Loading MSCOCO bottomup features from: {}".format(
+            dataset_args["FasterRCNN"]["mscoco_bottomup_features"]
+        )
+    )
+    mscoco_bottomup_features = np.load(
+        dataset_args["FasterRCNN"]["mscoco_bottomup_features"]
+    )
 
-    print("Loading MSCOCO bottomup boxes from: {}".format(dataset_args["FasterRCNN"]["mscoco_bottomup_boxes"]))
+    print(
+        "Loading MSCOCO bottomup boxes from: {}".format(
+            dataset_args["FasterRCNN"]["mscoco_bottomup_boxes"]
+        )
+    )
     mscoco_bottomup_boxes = np.load(dataset_args["FasterRCNN"]["mscoco_bottomup_boxes"])
 
     imgid2fasterRCNNfeatures = {}
     for mscoco_id, mscoco_pos in image_id2image_pos.items():
         imgid2fasterRCNNfeatures[mscoco_id] = dict()
-        imgid2fasterRCNNfeatures[mscoco_id]["features"] = mscoco_bottomup_features[mscoco_pos]
+        imgid2fasterRCNNfeatures[mscoco_id]["features"] = mscoco_bottomup_features[
+            mscoco_pos
+        ]
         imgid2fasterRCNNfeatures[mscoco_id]["boxes"] = mscoco_bottomup_boxes[mscoco_pos]
         imgid2fasterRCNNfeatures[mscoco_id]["img_h"] = img_h[mscoco_pos]
         imgid2fasterRCNNfeatures[mscoco_id]["img_w"] = img_w[mscoco_pos]
@@ -84,7 +102,9 @@ if __name__ == "__main__":
         # model = DataParallel(model)
     print(model)
 
-    dataset_test = N2NLXMERTDataset(split='test', **dataset_args, imgid2fasterRCNNfeatures=imgid2fasterRCNNfeatures)
+    dataset_test = N2NLXMERTDataset(
+        split="test", **dataset_args, imgid2fasterRCNNfeatures=imgid2fasterRCNNfeatures
+    )
     print("The dataset contains {} instances".format(len(dataset_test)))
 
     dataloader = DataLoader(
@@ -93,7 +113,7 @@ if __name__ == "__main__":
         shuffle=False,
         drop_last=False,
         pin_memory=use_cuda,
-        num_workers=0
+        num_workers=0,
     )
 
     softmax = nn.Softmax(dim=-1)
@@ -102,11 +122,7 @@ if __name__ == "__main__":
 
     save_guess_probs = collections.defaultdict(lambda: collections.defaultdict(dict))
 
-    ind2word = {
-        5 : 'yes',
-        6 : 'no',
-        7 : 'n/a'
-    }
+    ind2word = {5: "yes", 6: "no", 7: "n/a"}
 
     all_accuracies = []
     with torch.no_grad():
@@ -116,37 +132,49 @@ if __name__ == "__main__":
             #     break
 
             _, guesser_out = model(
-                src_q=sample['src_q'],
-                tgt_len=sample['tgt_len'],
+                src_q=sample["src_q"],
+                tgt_len=sample["tgt_len"],
                 visual_features=sample["image"],
-                spatials=sample['spatials'],
-                objects=sample['objects'],
+                spatials=sample["spatials"],
+                objects=sample["objects"],
                 mask_select=1,
-                target_cat=sample['target_cat'],
+                target_cat=sample["target_cat"],
                 history_raw=sample["history_raw"],
                 fasterrcnn_features=sample["FasterRCNN"]["features"],
-                fasterrcnn_boxes=sample["FasterRCNN"]["boxes"]
+                fasterrcnn_boxes=sample["FasterRCNN"]["boxes"],
             )
 
-            batch_accuracies = calculate_accuracy_all(softmax(guesser_out), sample['target_obj'].reshape(-1).cuda())
+            batch_accuracies = calculate_accuracy_all(
+                softmax(guesser_out), sample["target_obj"].reshape(-1).cuda()
+            )
             all_accuracies.append(batch_accuracies)
 
-            g_output = softmax(guesser_out) * sample['objects_mask'].float().cuda()
-            target = sample['target_obj']
+            g_output = softmax(guesser_out) * sample["objects_mask"].float().cuda()
+            target = sample["target_obj"]
             for index, g in enumerate(batch_accuracies):
-                save_game_accuracy[sample['game_id'][index]] = g
+                save_game_accuracy[sample["game_id"][index]] = g
                 num_turns = 0
-                for idd, el in enumerate(sample['history'][index].data):
-                    if el == 12 and int(sample['history'][index][idd+1]) in [5, 6, 7]:
+                for idd, el in enumerate(sample["history"][index].data):
+                    if el == 12 and int(sample["history"][index][idd + 1]) in [5, 6, 7]:
                         num_turns += 1
-                if int((sample['history'][index] != 0).sum()) == 1:
-                    save_guess_probs[sample['game_id'][index]][num_turns]['ans'] = "X"
+                if int((sample["history"][index] != 0).sum()) == 1:
+                    save_guess_probs[sample["game_id"][index]][num_turns]["ans"] = "X"
                 else:
-                    save_guess_probs[sample['game_id'][index]][num_turns]['ans'] = ind2word[int(sample['history'][index][sample['history_len'][index] - 1])]
+                    save_guess_probs[sample["game_id"][index]][num_turns][
+                        "ans"
+                    ] = ind2word[
+                        int(sample["history"][index][sample["history_len"][index] - 1])
+                    ]
 
-                save_guess_probs[sample['game_id'][index]][num_turns]['probs'] = g_output[index].data.tolist()
-                save_guess_probs[sample['game_id'][index]][num_turns]['target'] = int(target[index])
-                save_guess_probs[sample['game_id'][index]][num_turns]['obj_mask'] = torch.nonzero(sample['objects_mask'][index]).size(0)
+                save_guess_probs[sample["game_id"][index]][num_turns][
+                    "probs"
+                ] = g_output[index].data.tolist()
+                save_guess_probs[sample["game_id"][index]][num_turns]["target"] = int(
+                    target[index]
+                )
+                save_guess_probs[sample["game_id"][index]][num_turns][
+                    "obj_mask"
+                ] = torch.nonzero(sample["objects_mask"][index]).size(0)
 
     with open("guesser_only_scratch_save_guess_probs.json", mode="w") as out_file:
         json.dump(save_guess_probs, out_file)

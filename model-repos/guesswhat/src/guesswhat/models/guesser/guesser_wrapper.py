@@ -4,28 +4,32 @@ from generic.tf_utils.evaluator import Evaluator
 
 
 class GuesserWrapper(object):
-
     def __init__(self, guesser):
         self.guesser = guesser
         self.evaluator = None
 
     def initialize(self, sess):
-        self.evaluator = Evaluator(self.guesser.get_sources(sess), self.guesser.scope_name)
+        self.evaluator = Evaluator(
+            self.guesser.get_sources(sess), self.guesser.scope_name
+        )
 
     def find_object(self, sess, dialogues, seq_length, game_data):
         game_data["dialogues"] = dialogues
         game_data["seq_length"] = seq_length
 
         # sample
-        selected_object, softmax = self.evaluator.execute(sess, output=[self.guesser.selected_object, self.guesser.softmax], batch=game_data)
+        selected_object, softmax = self.evaluator.execute(
+            sess,
+            output=[self.guesser.selected_object, self.guesser.softmax],
+            batch=game_data,
+        )
 
-        found = (selected_object == game_data["targets_index"])
+        found = selected_object == game_data["targets_index"]
 
         return found, softmax, selected_object
 
 
 class GuesserUserWrapper(object):
-
     def __init__(self, tokenizer, img_raw_dir=None):
         self.tokenizer = tokenizer
         self.img_raw_dir = img_raw_dir
@@ -40,7 +44,7 @@ class GuesserUserWrapper(object):
         print("Final dialogue:")
         qas = self.tokenizer.split_questions(dialogues[0])
         for qa in qas:
-            print(" -",  self.tokenizer.decode(qa))
+            print(" -", self.tokenizer.decode(qa))
 
         print()
         print("Select one of the following objects")
@@ -51,7 +55,7 @@ class GuesserUserWrapper(object):
 
         # Step 2 : Ask for guess
         while True:
-            selected_object = input('What is your guess id? (S)how image. -->  ')
+            selected_object = input("What is your guess id? (S)how image. -->  ")
 
             if selected_object == "S" or selected_object.lower() == "show":
                 game.show(self.img_raw_dir, display_index=True)
@@ -60,7 +64,7 @@ class GuesserUserWrapper(object):
                 break
 
         # Step 3 : Check guess
-        found = (selected_object == game_data["targets_index"])
+        found = selected_object == game_data["targets_index"]
         softmax = np.zeros(len(objects))
         softmax[selected_object] = 1
 

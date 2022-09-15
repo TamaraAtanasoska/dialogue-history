@@ -12,8 +12,11 @@ from models.Guesser import Guesser
 """
 Putting all the models together
 """
+
+
 class LXMERTEnsembleGuesserOnly(nn.Module):
     """docstring for Ensemble."""
+
     def __init__(self, **kwargs):
         super(LXMERTEnsembleGuesserOnly, self).__init__()
         """Short summary.
@@ -31,26 +34,27 @@ class LXMERTEnsembleGuesserOnly(nn.Module):
 
         # TODO: use get_attr to get different versions of the same model. For example QGen
 
-        lxrt_encoder_args = SimpleNamespace(**self.ensemble_args["encoder"]["LXRTEncoder"])
-        self.lxrt_encoder = LXRTEncoder(
-            lxrt_encoder_args,
-            max_seq_length=200
+        lxrt_encoder_args = SimpleNamespace(
+            **self.ensemble_args["encoder"]["LXRTEncoder"]
         )
+        self.lxrt_encoder = LXRTEncoder(lxrt_encoder_args, max_seq_length=200)
         if not lxrt_encoder_args.from_scratch:
             print("Loading LXMERT pretrained model...")
-            self.lxrt_encoder.load(str(pathlib.Path(__file__).parent.parent.resolve()) + lxrt_encoder_args.model_path)
+            self.lxrt_encoder.load(
+                str(pathlib.Path(__file__).parent.parent.resolve())
+                + lxrt_encoder_args.model_path
+            )
         else:
             print("Initializing LXMERT model from scratch...")
 
-        self.guesser = Guesser(**self.ensemble_args['guesser'])
+        self.guesser = Guesser(**self.ensemble_args["guesser"])
 
-        self.decider = Decider(**self.ensemble_args['decider'])
+        self.decider = Decider(**self.ensemble_args["decider"])
 
         self.dropout = nn.Dropout(p=0.5)
 
         self.scale_to = nn.Sequential(
-            nn.Linear(768, self.ensemble_args['encoder']['scale_to']),
-            nn.Tanh()
+            nn.Linear(768, self.ensemble_args["encoder"]["scale_to"]), nn.Tanh()
         )
 
     def forward(self, **kwargs):
@@ -77,14 +81,22 @@ class LXMERTEnsembleGuesserOnly(nn.Module):
             'qgen_out' : predicted next question
 
         """
-        spatials = kwargs['spatials']
-        objects = kwargs['objects']
+        spatials = kwargs["spatials"]
+        objects = kwargs["objects"]
 
-        lxrt_res = self.lxrt_encoder(kwargs["history_raw"], (kwargs["fasterrcnn_features"], kwargs["fasterrcnn_boxes"]))
+        lxrt_res = self.lxrt_encoder(
+            kwargs["history_raw"],
+            (kwargs["fasterrcnn_features"], kwargs["fasterrcnn_boxes"]),
+        )
         encoder_hidden = self.scale_to(torch.unsqueeze(lxrt_res, 1))
 
         decider_out = self.decider(encoder_hidden=encoder_hidden)
 
-        guesser_out = self.guesser(encoder_hidden=encoder_hidden, spatials=spatials, objects=objects, regress=False)
+        guesser_out = self.guesser(
+            encoder_hidden=encoder_hidden,
+            spatials=spatials,
+            objects=objects,
+            regress=False,
+        )
 
         return decider_out, guesser_out

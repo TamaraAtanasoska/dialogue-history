@@ -7,8 +7,10 @@ from utils.wrap_var import to_var
 
 use_cuda = torch.cuda.is_available()
 
+
 class EncoderDeVries(nn.Module):
     """docstring for EncoderBasic."""
+
     def __init__(self, **kwargs):
         super(EncoderDeVries, self).__init__()
         """Short summary.
@@ -29,10 +31,18 @@ class EncoderDeVries(nn.Module):
 
         self.encoder_args = kwargs
 
-        self.word_embeddings = nn.Embedding(self.encoder_args['vocab_size'], self.encoder_args['word_embedding_dim'], padding_idx=self.encoder_args['word_pad_token'])
+        self.word_embeddings = nn.Embedding(
+            self.encoder_args["vocab_size"],
+            self.encoder_args["word_embedding_dim"],
+            padding_idx=self.encoder_args["word_pad_token"],
+        )
 
-        self.rnn = nn.LSTM(self.encoder_args['word_embedding_dim'], self.encoder_args['hidden_dim'], num_layers=self.encoder_args['num_layers'], batch_first=True)
-
+        self.rnn = nn.LSTM(
+            self.encoder_args["word_embedding_dim"],
+            self.encoder_args["hidden_dim"],
+            num_layers=self.encoder_args["num_layers"],
+            batch_first=True,
+        )
 
     def forward(self, **kwargs):
         """Short summary.
@@ -51,7 +61,7 @@ class EncoderDeVries(nn.Module):
 
         """
 
-        history, history_len = kwargs['history'], kwargs['history_len']
+        history, history_len = kwargs["history"], kwargs["history_len"]
 
         if isinstance(history_len, Variable):
             history_len = history_len.data
@@ -61,27 +71,33 @@ class EncoderDeVries(nn.Module):
         history = history[ind]
 
         history_embedding = self.word_embeddings(history)
-        packed_history = pack_padded_sequence(history_embedding, list(history_len), batch_first=True)
+        packed_history = pack_padded_sequence(
+            history_embedding, list(history_len), batch_first=True
+        )
 
-        if self.encoder_args['decider'] == 'decider_seq':
-            history_q_lens = kwargs['history_q_lens'][ind]
-            history_q_lens = history_q_lens-1 #Because the index starts from 0
+        if self.encoder_args["decider"] == "decider_seq":
+            history_q_lens = kwargs["history_q_lens"][ind]
+            history_q_lens = history_q_lens - 1  # Because the index starts from 0
             packed_hidden, (_hidden, _) = self.rnn(packed_history, hx=None)
             # The _hidden is not in batch first format
-            _hidden = _hidden.transpose(1,0)
+            _hidden = _hidden.transpose(1, 0)
 
-            if kwargs['mask_select']:
-                hidden_padded, _ = pad_packed_sequence(packed_hidden, batch_first = True)
-                history_hiddens = to_var(torch.zeros(hidden_padded.size(0), 11, hidden_padded.size(-1)))
+            if kwargs["mask_select"]:
+                hidden_padded, _ = pad_packed_sequence(packed_hidden, batch_first=True)
+                history_hiddens = to_var(
+                    torch.zeros(hidden_padded.size(0), 11, hidden_padded.size(-1))
+                )
                 # 11 beacuse that is the max number of questions+1(start_token)
                 for i in range(history_q_lens.size(0)):
                     for j, idx in enumerate(list(history_q_lens[i].data)):
                         if idx == -1:
                             break
-                        history_hiddens[i, j,:] = hidden_padded[i, idx-1, :]
+                        history_hiddens[i, j, :] = hidden_padded[i, idx - 1, :]
 
                 _, revert_ind = ind.sort()
-                history_hiddens = history_hiddens[revert_ind.cuda() if use_cuda else revert_ind]
+                history_hiddens = history_hiddens[
+                    revert_ind.cuda() if use_cuda else revert_ind
+                ]
                 _hidden = _hidden[revert_ind.cuda() if use_cuda else revert_ind]
                 encoder_hidden = _hidden
                 decider_input = _hidden
@@ -97,7 +113,7 @@ class EncoderDeVries(nn.Module):
         else:
             _, (_hidden, _) = self.rnn(packed_history, hx=None)
             # The _hidden is not in batch first format
-            _hidden = _hidden.transpose(1,0)
+            _hidden = _hidden.transpose(1, 0)
 
             # undo the sorting
             _, revert_ind = ind.sort()

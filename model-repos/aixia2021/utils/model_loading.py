@@ -6,6 +6,7 @@ from torch.nn import DataParallel
 
 use_cuda = torch.cuda.is_available()
 
+
 def load_model(model, bin_file, use_dataparallel):
     """
     Given a model instance, loads the weights from bin_file. Handles cuda & DataParallel stuff.
@@ -17,19 +18,19 @@ def load_model(model, bin_file, use_dataparallel):
     state_dict = torch.load(bin_file, map_location=lambda storage, loc: storage)
     new_state_dict = OrderedDict()
     if use_cuda:
-        for k,v in state_dict.items():
-            if k[:7] == 'module.':
+        for k, v in state_dict.items():
+            if k[:7] == "module.":
                 if use_dataparallel:
                     model = DataParallel(model)
                     break
                 else:
-                    name = k[7:] # remove `module.`
+                    name = k[7:]  # remove `module.`
                     new_state_dict[name] = v
         model = model.cuda()
     else:
         for k, v in state_dict.items():
-            if k[:7] == 'module.':
-                name = k[7:] # remove `module.`
+            if k[:7] == "module.":
+                name = k[7:]  # remove `module.`
                 new_state_dict[name] = v
 
     if len(new_state_dict.keys()) > 0:

@@ -4,8 +4,8 @@ import torch.nn as nn
 For different types of Deciders.
 """
 
-class Decider(nn.Module):
 
+class Decider(nn.Module):
     def __init__(self, **kwargs):
         super(Decider, self).__init__()
         """
@@ -20,10 +20,15 @@ class Decider(nn.Module):
         self.mlp = nn.Sequential()
 
         idx = 0
-        for i in range(len(self.decider_args['arch'])-1):
-            self.mlp.add_module(str(idx), nn.Linear(self.decider_args['arch'][i], self.decider_args['arch'][i+1]))
+        for i in range(len(self.decider_args["arch"]) - 1):
+            self.mlp.add_module(
+                str(idx),
+                nn.Linear(
+                    self.decider_args["arch"][i], self.decider_args["arch"][i + 1]
+                ),
+            )
             idx += 1
-            if i<len(self.decider_args['arch'])-2:
+            if i < len(self.decider_args["arch"]) - 2:
                 self.mlp.add_module(str(idx), nn.ReLU())
                 idx += 1
 
@@ -42,9 +47,8 @@ class Decider(nn.Module):
 
         """
 
-        encoder_hidden = kwargs['encoder_hidden']
+        encoder_hidden = kwargs["encoder_hidden"]
 
         decision = self.mlp(encoder_hidden)
 
         return decision
-

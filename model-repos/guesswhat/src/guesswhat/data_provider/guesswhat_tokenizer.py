@@ -1,11 +1,13 @@
 from nltk.tokenize import TweetTokenizer
 import json
 
+
 class GWTokenizer:
     """ """
+
     def __init__(self, dictionary_file):
-        with open(dictionary_file, 'r') as f:
-            self.word2i = json.load(f)['word2i']
+        with open(dictionary_file, "r") as f:
+            self.word2i = json.load(f)["word2i"]
         self.wpt = TweetTokenizer(preserve_case=False)
 
         if "<stop_dialogue>" not in self.word2i:
@@ -31,22 +33,23 @@ class GWTokenizer:
     Input: String
     Output: List of tokens
     """
+
     def apply(self, question, is_answer=False):
 
         tokens = []
         if is_answer:
-            token = '<' + question.lower() + '>'
+            token = "<" + question.lower() + ">"
             tokens.append(self.word2i[token])
         else:
             for token in self.wpt.tokenize(question):
                 if token not in self.word2i:
-                    token = '<unk>'
+                    token = "<unk>"
                 tokens.append(self.word2i[token])
 
         return tokens
 
     def decode(self, tokens):
-        return ' '.join([self.i2word[tok] for tok in tokens])
+        return " ".join([self.i2word[tok] for tok in tokens])
 
     def split_questions(self, dialogue_tokens):
 
@@ -71,6 +74,3 @@ class GWTokenizer:
                 qa = []
 
         return qas
-
-
-

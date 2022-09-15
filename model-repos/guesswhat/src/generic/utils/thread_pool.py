@@ -1,10 +1,10 @@
-
 from multiprocessing.pool import ThreadPool
 from multiprocessing import Pool
 
 
 # CPU/GPU option
 # h5 requires a Tread pool while raw images requires to create new process
+
 
 def create_cpu_pool(no_thread, use_process, maxtasksperchild=1000):
 
