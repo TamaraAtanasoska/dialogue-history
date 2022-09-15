@@ -20,8 +20,9 @@ from utils.datasets.SL.N2NDataset import N2NDataset
 from utils.eval import calculate_accuracy
 from utils.wrap_var import to_var
 
-# TODO Make this capitalised everywhere to inform it is a global variable
-use_cuda = torch.cuda.is_available()
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+multiple_gpus_available = torch.cuda.device_count() > 1
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -47,7 +48,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     print(args.exp_name)
 
-    device = torch.device('cuda:0') if use_cuda else torch.device('cpu')
     if args.exp_tracker is not None:
         wandb.init(project="lv", entity="we")
 
@@ -65,17 +65,18 @@ if __name__ == '__main__':
         with open(model_dir + 'args.json', 'w') as f:
             json.dump(vars(args), f)  # converting args.namespace to dict
 
-    float_tensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
+    float_tensor = torch.cuda.FloatTensor if device.type == 'cuda' else torch.FloatTensor
     torch.manual_seed(exp_config['seed'])
-    if use_cuda:
+    if device.type == 'cuda':
         torch.cuda.manual_seed_all(exp_config['seed'])
 
     # Init model
     model = EnsembleDeVries(**ensemble_args)
-    if use_cuda:
-        model.cuda()
+    if multiple_gpus_available:
         model = DataParallel(model)
+    model.to(device)
     print(model)
+
     optimizer = optim.Adam(model.parameters(), optimizer_args['lr'])
     # TODO Checkpoint loading
     if args.ckpt is not None:
@@ -91,9 +92,9 @@ if __name__ == '__main__':
     if args.resnet:
         cnn = ResNet()
 
-        if use_cuda:
-            cnn.cuda()
+        if multiple_gpus_available:
             cnn = DataParallel(cnn)
+        cnn.to(device)
 
     softmax = nn.Softmax(dim=-1)
 
@@ -102,9 +103,6 @@ if __name__ == '__main__':
 
     # For Decider
     decider_cross_entropy = nn.CrossEntropyLoss(reduction='sum')
-
-    # For QGen.
-    _cross_entropy = nn.CrossEntropyLoss(ignore_index=0)
 
     if args.resnet:
         # This was for the new image case, we don't use it
@@ -121,7 +119,6 @@ if __name__ == '__main__':
         # Logging
         train_decision_loss = float_tensor()
         val_decision_loss = float_tensor()
-        val_qgen_loss = float_tensor()
         train_guesser_loss = float_tensor()
         val_guesser_loss = float_tensor()
         train_total_loss = float_tensor()
@@ -130,17 +127,15 @@ if __name__ == '__main__':
         training_guesser_accuracy = list()
         validation_guesser_accuracy = list()
         training_ask_accuracy = list()
-        training_guess_accuracy = list()
         validation_ask_accuracy = list()
-        validation_guess_accuracy = list()
 
         for split, dataset in zip(exp_config['splits'], [dataset_train, dataset_val]):
             dataloader = DataLoader(
                 dataset=dataset,
                 batch_size=optimizer_args['batch_size'],
                 shuffle=True,
-                drop_last=False,
-                pin_memory=use_cuda,
+                drop_last=True,
+                pin_memory=True if device.type == 'cuda' else False,
                 num_workers=0
             )
 
@@ -150,13 +145,6 @@ if __name__ == '__main__':
                 model.eval()
 
             for i_batch, sample in tqdm.tqdm(enumerate(dataloader), total=len(dataloader), ncols=100):
-                # if i_batch > 60 and args.breaking:
-                #     print('Breaking after processing 60 batch')
-                #     break
-                #
-                # if epoch == 14 and i_batch ==52:
-                #     aa = 0
-
                 sample['tgt_len'], ind = torch.sort(sample['tgt_len'], 0, descending=True)
                 batch_size = ind.size(0)
 
@@ -194,9 +182,6 @@ if __name__ == '__main__':
                     history_len=sample['history_len']
                 )
 
-                # decider_loss += ensemble_args['decider']['guess_weight'] * decider_cross_entropy(decider_out.squeeze(1), sample['decider_tgt'])
-                # guess_accuracy = calculate_accuracy(decider_out.squeeze(1), sample['decider_tgt'])
-
                 guesser_loss += guesser_loss_function(guesser_out * sample['objects_mask'].float(),
                                                       sample['target_obj'])
                 guesser_accuracy = calculate_accuracy(softmax(guesser_out), sample['target_obj'].reshape(-1))
@@ -214,14 +199,12 @@ if __name__ == '__main__':
 
                     # Logging variables
                     training_guesser_accuracy.append(guesser_accuracy)
-                    # training_guess_accuracy.append(guess_accuracy)
                     train_decision_loss = torch.cat([train_decision_loss, decider_loss.data / batch_size])
                     train_guesser_loss = torch.cat([train_guesser_loss, guesser_loss.data])
                     train_total_loss = torch.cat([train_total_loss, loss.data])
 
                 elif split == 'val':
                     validation_guesser_accuracy.append(guesser_accuracy)
-                    # validation_guess_accuracy.append(guess_accuracy)
                     val_decision_loss = torch.cat([val_decision_loss, decider_loss.data / batch_size])
                     val_guesser_loss = torch.cat([val_guesser_loss, guesser_loss.data])
                     val_total_loss = torch.cat([val_total_loss, loss.data])
@@ -237,12 +220,10 @@ if __name__ == '__main__':
 
         print('Epoch %03d, Time taken %.3f, Total Training Loss %.4f, Total Validation Loss %.4f' % (
         epoch, time() - start, torch.mean(train_total_loss), torch.mean(val_total_loss)))
-        print('Validation Loss:: QGen %.3f, Decider %.3f, Guesser %.3f' % (
-        torch.mean(val_qgen_loss), torch.mean(val_decision_loss), torch.mean(val_guesser_loss)))
-        print('Training Accuracy:: Guess  %.3f, Guesser %.3f' % (
-        np.mean(training_guess_accuracy), np.mean(training_guesser_accuracy)))
-        print('Validation Accuracy:: Guess  %.3f, Guesser %.3f' % (
-        np.mean(validation_guess_accuracy), np.mean(validation_guesser_accuracy)))
+        print('Validation Loss:: Decider %.3f, Guesser %.3f' % (
+        torch.mean(val_decision_loss), torch.mean(val_guesser_loss)))
+        print('Training Accuracy:: Guesser %.3f' % (np.mean(training_guesser_accuracy)))
+        print('Validation Accuracy::  Guesser %.3f' % (np.mean(validation_guesser_accuracy)))
 
         if args.exp_tracker is not None:
             wandb.log({'Guesser Training Loss': torch.mean(train_guesser_loss),

@@ -79,7 +79,7 @@ class QGenSeq2Seq(nn.Module):
         hidden = encoder_hidden.transpose(1, 0)
         proj_visual_features = self.ReLU(self.scale_visual_to(visual_features))
 
-        cell = (torch.zeros(self.qgen_args['num_layers'], batch_size, self.qgen_args['hidden_dim'])).cuda()
+        cell = (torch.zeros(self.qgen_args['num_layers'], batch_size, self.qgen_args['hidden_dim']), device=torch.device('cuda'))
 
         # copy visual features for each input token
         proj_visual_features_batch = proj_visual_features.repeat(1, self.qgen_args['max_tgt_length']).view(

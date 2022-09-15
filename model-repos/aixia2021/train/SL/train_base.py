@@ -21,8 +21,9 @@ from utils.datasets.SL.N2NResNetDataset import N2NResNetDataset
 from utils.eval import calculate_accuracy
 from utils.wrap_var import to_var
 
-# TODO Make this capitalised everywhere to inform it is a global variable
-use_cuda = torch.cuda.is_available()
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+multiple_gpus_available = torch.cuda.device_count() > 1
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -52,9 +53,9 @@ if __name__ == '__main__':
         with open(model_dir+'args.json', 'w') as f:
             json.dump(vars(args), f) # converting args.namespace to dict
 
-    float_tensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
+    float_tensor = torch.cuda.FloatTensor if device.type == 'cuda' else torch.FloatTensor
     torch.manual_seed(exp_config['seed'])
-    if use_cuda:
+    if device.type == 'cuda':
         torch.cuda.manual_seed_all(exp_config['seed'])
 
     # Init Model
@@ -64,17 +65,17 @@ if __name__ == '__main__':
         checkpoint = torch.load('bin/SL/ensemble_base2022_06_24_18_53/model_ensemble_ensemble_base_E_0')
         model.load_state_dict(checkpoint)
 
-    if use_cuda:
-        model.cuda()
+    if multiple_gpus_available:
         model = DataParallel(model)
+    model.to(device)
     print(model)
 
     if args.resnet:
         cnn = ResNet()
 
-        if use_cuda:
-            cnn.cuda()
+        if multiple_gpus_available:
             cnn = DataParallel(cnn)
+        cnn.to(device)
 
     softmax = nn.Softmax(dim=-1)
 
@@ -127,8 +128,8 @@ if __name__ == '__main__':
                 dataset=dataset,
                 batch_size=optimizer_args['batch_size'],
                 shuffle=True,
-                pin_memory=use_cuda,
-                drop_last=False,
+                pin_memory=True if device.type == 'cuda' else False,
+                drop_last=True,
                 num_workers=0
             )
 
