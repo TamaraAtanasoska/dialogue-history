@@ -9,8 +9,11 @@ from models.Guesser import Guesser
 """
 Putting all the models together
 """
+
+
 class Ensemble(nn.Module):
     """docstring for Ensemble."""
+
     def __init__(self, **kwargs):
         super(Ensemble, self).__init__()
         """Short summary.
@@ -30,18 +33,18 @@ class Ensemble(nn.Module):
 
         # TODO: use get_attr to get different versions of the same model. For example QGen
 
-        self.encoder = Encoder(**self.ensemble_args['encoder'])
+        self.encoder = Encoder(**self.ensemble_args["encoder"])
 
         # Qgen selection
         # For the NAACL 2019, we used Seq2Seq one
-        if self.ensemble_args['qgen']['qgen'] == 'qgen_cap':
-            self.qgen = QGenImgCap(**self.ensemble_args['qgen'])
+        if self.ensemble_args["qgen"]["qgen"] == "qgen_cap":
+            self.qgen = QGenImgCap(**self.ensemble_args["qgen"])
         else:
-            self.qgen = QGenSeq2Seq(**self.ensemble_args['qgen'])
+            self.qgen = QGenSeq2Seq(**self.ensemble_args["qgen"])
 
-        self.guesser = Guesser(**self.ensemble_args['guesser'])
+        self.guesser = Guesser(**self.ensemble_args["guesser"])
 
-        self.decider = Decider(**self.ensemble_args['decider'])
+        self.decider = Decider(**self.ensemble_args["decider"])
 
         self.dropout = nn.Dropout(p=0.5)
 
@@ -68,25 +71,38 @@ class Ensemble(nn.Module):
             'qgen_out' : predicted next question
 
         """
-        history, history_len = kwargs['history'], kwargs['history_len']
-        lengths = kwargs['tgt_len']
-        visual_features = self.dropout(kwargs['visual_features'])
-        src_q = kwargs['src_q']
-        spatials = kwargs['spatials']
-        objects = kwargs['objects']
-        mask_select = kwargs['mask_select']
+        history, history_len = kwargs["history"], kwargs["history_len"]
+        lengths = kwargs["tgt_len"]
+        visual_features = self.dropout(kwargs["visual_features"])
+        src_q = kwargs["src_q"]
+        spatials = kwargs["spatials"]
+        objects = kwargs["objects"]
+        mask_select = kwargs["mask_select"]
 
         objects_feat = kwargs.get("objects_feat", None)
 
-        encoder_hidden = self.encoder(history=history, history_len=history_len, visual_features=visual_features)
+        encoder_hidden = self.encoder(
+            history=history, history_len=history_len, visual_features=visual_features
+        )
         self.gdse = encoder_hidden
         decider_out = self.decider(encoder_hidden=encoder_hidden)
 
         if mask_select:
-            guesser_out = self.guesser(encoder_hidden= encoder_hidden, spatials= spatials, objects= objects, objects_feat=objects_feat, regress= False)
+            guesser_out = self.guesser(
+                encoder_hidden=encoder_hidden,
+                spatials=spatials,
+                objects=objects,
+                objects_feat=objects_feat,
+                regress=False,
+            )
 
             return decider_out, guesser_out
         else:
-            qgen_out = self.qgen(src_q=src_q, encoder_hidden=encoder_hidden, visual_features=visual_features, lengths=lengths)
+            qgen_out = self.qgen(
+                src_q=src_q,
+                encoder_hidden=encoder_hidden,
+                visual_features=visual_features,
+                lengths=lengths,
+            )
 
             return decider_out, qgen_out

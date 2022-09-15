@@ -12,7 +12,13 @@ class ConditionalBatchNorm(object):
     Batch normalization layer that may take a cbn factory as input
     """
 
-    def __init__(self, cbn_input_builder, epsilon=1e-5, is_training=True, excluded_scope_names=list()):
+    def __init__(
+        self,
+        cbn_input_builder,
+        epsilon=1e-5,
+        is_training=True,
+        excluded_scope_names=list(),
+    ):
         """
         :param cbn_input_builder: user defined cbn factory
         :param epsilon: epsilon for batch norm (stability)
@@ -44,18 +50,26 @@ class ConditionalBatchNorm(object):
         gammas = tf.tile(tf.expand_dims(gammas, 0), tf.stack([batch_size, 1]))
 
         scope_name = tf.get_variable_scope().name
-        exclude_cbn = any([(needle in scope_name) for needle in self.excluded_scope_names])
+        exclude_cbn = any(
+            [(needle in scope_name) for needle in self.excluded_scope_names]
+        )
         exclude_cbn = exclude_cbn or "*" in self.excluded_scope_names
 
-        delta_betas = tf.tile(tf.constant(0.0, shape=[1, num_feature_maps]), tf.stack([batch_size, 1]))
-        delta_gammas = tf.tile(tf.constant(0.0, shape=[1, num_feature_maps]), tf.stack([batch_size, 1]))
+        delta_betas = tf.tile(
+            tf.constant(0.0, shape=[1, num_feature_maps]), tf.stack([batch_size, 1])
+        )
+        delta_gammas = tf.tile(
+            tf.constant(0.0, shape=[1, num_feature_maps]), tf.stack([batch_size, 1])
+        )
 
         if not exclude_cbn:
             with tf.variable_scope("cbn_input"):
                 print("CBN : {} - {}".format(input.name, input.get_shape()))
                 feature_maps = tf.stop_gradient(input)
 
-                delta_betas, delta_gammas = self.cbn_input_builder.create_cbn_input(feature_maps)
+                delta_betas, delta_gammas = self.cbn_input_builder.create_cbn_input(
+                    feature_maps
+                )
 
         with tf.variable_scope("joint"):
             betas += delta_betas
@@ -66,9 +80,9 @@ class ConditionalBatchNorm(object):
             gammas=gammas,
             betas=betas,
             epsilon=self.epsilon,
-            is_training=self.is_training)
+            is_training=self.is_training,
+        )
         return out
-
 
 
 def batch_norm(input, gammas, betas, epsilon, is_training):
@@ -85,13 +99,17 @@ def batch_norm(input, gammas, betas, epsilon, is_training):
     :return: input after BN
     """
 
-    assert (len(input.get_shape()) == 4)
+    assert len(input.get_shape()) == 4
     num_channels = int(input.get_shape()[3])
 
     # use cbn input score to not initialize the variable with resnet values
     with tf.variable_scope("cbn_input"):
-        moving_mean = tf.get_variable("moving_mean", [num_channels], dtype=tf.float32, trainable=False)
-        moving_variance = tf.get_variable("moving_variance", [num_channels], dtype=tf.float32, trainable=False)
+        moving_mean = tf.get_variable(
+            "moving_mean", [num_channels], dtype=tf.float32, trainable=False
+        )
+        moving_variance = tf.get_variable(
+            "moving_variance", [num_channels], dtype=tf.float32, trainable=False
+        )
 
     def _training():
         """
@@ -99,8 +117,12 @@ def batch_norm(input, gammas, betas, epsilon, is_training):
         """
         mean, variance = tf.nn.moments(input, [0, 1, 2])
 
-        update_moving_mean = moving_averages.assign_moving_average(moving_mean, mean, 0.99, zero_debias=True)
-        update_moving_variance = moving_averages.assign_moving_average(moving_variance, variance, 0.99, zero_debias=False)
+        update_moving_mean = moving_averages.assign_moving_average(
+            moving_mean, mean, 0.99, zero_debias=True
+        )
+        update_moving_variance = moving_averages.assign_moving_average(
+            moving_variance, variance, 0.99, zero_debias=False
+        )
 
         return mean, variance, update_moving_mean, update_moving_variance
 
@@ -108,9 +130,9 @@ def batch_norm(input, gammas, betas, epsilon, is_training):
         return moving_mean, moving_variance, moving_mean, moving_variance
 
     # Collect mean/variance to prepare moving mean/variance
-    means, variances, update_mean, update_variance = tf_utils.smart_cond(is_training,
-                                                                         _training,
-                                                                         _inference)
+    means, variances, update_mean, update_variance = tf_utils.smart_cond(
+        is_training, _training, _inference
+    )
 
     # Add moving mean/variance to tue update_ops (cf tensorflow batchnorm documentation)
     updates_collections = ops.GraphKeys.UPDATE_OPS
@@ -128,13 +150,13 @@ def batch_norm(input, gammas, betas, epsilon, is_training):
 
 
 # Test
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     inp = tf.placeholder(tf.float32, [50, 5, 5, 10])
-    is_training = tf.placeholder(tf.bool, name='is_training')
+    is_training = tf.placeholder(tf.bool, name="is_training")
 
-    gammas = tf.constant(np.ones((50, 10), dtype='float32'))
-    betas = tf.constant(np.zeros((50, 10), dtype='float32'))
+    gammas = tf.constant(np.ones((50, 10), dtype="float32"))
+    betas = tf.constant(np.zeros((50, 10), dtype="float32"))
 
     out = batch_norm(inp, gammas, betas, 1e-5, is_training)
 
@@ -147,9 +169,21 @@ if __name__ == '__main__':
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         for _ in range(10):
-            o = sess.run(update, feed_dict={inp: np.random.normal(loc=5.0, size=[50, 5, 5, 10]), is_training: True})
+            o = sess.run(
+                update,
+                feed_dict={
+                    inp: np.random.normal(loc=5.0, size=[50, 5, 5, 10]),
+                    is_training: True,
+                },
+            )
             m = sess.run(mean)
 
         for _ in range(10):
-            o = sess.run(update, feed_dict={inp: np.random.normal(loc=5.0, size=[50, 5, 5, 10]), is_training: False})
+            o = sess.run(
+                update,
+                feed_dict={
+                    inp: np.random.normal(loc=5.0, size=[50, 5, 5, 10]),
+                    is_training: False,
+                },
+            )
             m = sess.run(mean)

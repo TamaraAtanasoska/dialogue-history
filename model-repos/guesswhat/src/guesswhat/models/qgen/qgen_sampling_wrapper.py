@@ -33,11 +33,10 @@ class QGenSamplingWrapper(object):
         self.state_c = np.zeros((batch_size, self.state_size))
         self.state_h = np.zeros((batch_size, self.state_size))
 
-
     def sample_next_question(self, sess, prev_answers, game_data, greedy):
 
         game_data["dialogues"] = prev_answers
-        game_data["seq_length"] = [1]*len(prev_answers)
+        game_data["seq_length"] = [1] * len(prev_answers)
         game_data["state_c"] = self.state_c
         game_data["state_h"] = self.state_h
         game_data["greedy"] = greedy
@@ -52,7 +51,7 @@ class QGenSamplingWrapper(object):
 
         # Get questions
         padded_questions = transpose_questions.transpose([1, 0])
-        padded_questions = padded_questions[:,1:]  # ignore first token
+        padded_questions = padded_questions[:, 1:]  # ignore first token
 
         for i, l in enumerate(seq_length):
             padded_questions[i, l:] = self.tokenizer.padding_token
@@ -60,9 +59,3 @@ class QGenSamplingWrapper(object):
         questions = [q[:l] for q, l in zip(padded_questions, seq_length)]
 
         return padded_questions, questions, seq_length
-
-
-
-
-
-

@@ -1,23 +1,22 @@
 # !/usr/bin/env python
 
 # The root of bottom-up-attention repo. Do not need to change if using provided docker file.
-BUTD_ROOT = '/opt/butd/'
+BUTD_ROOT = "/opt/butd/"
 
 # SPLIT to its folder name under IMG_ROOT
 SPLIT2DIR = {
-        'train': 'train',
-        'valid': 'dev',
-        'test': 'test1',
-        'hidden': 'test2',  # Please correct whether it is test2
-        }
-
+    "train": "train",
+    "valid": "dev",
+    "test": "test1",
+    "hidden": "test2",  # Please correct whether it is test2
+}
 
 
 import os
 import sys
 
 sys.path.insert(0, BUTD_ROOT + "/tools")
-os.environ['GLOG_minloglevel'] = '2'
+os.environ["GLOG_minloglevel"] = "2"
 
 from fast_rcnn.config import cfg, cfg_from_file
 from fast_rcnn.test import im_detect, _get_blobs
@@ -34,8 +33,18 @@ from tqdm import tqdm
 
 csv.field_size_limit(sys.maxsize)
 
-FIELDNAMES = ["img_id", "img_h", "img_w", "objects_id", "objects_conf",
-              "attrs_id", "attrs_conf", "num_boxes", "boxes", "features"]
+FIELDNAMES = [
+    "img_id",
+    "img_h",
+    "img_w",
+    "objects_id",
+    "objects_conf",
+    "attrs_id",
+    "attrs_conf",
+    "num_boxes",
+    "boxes",
+    "features",
+]
 
 # Settings for the number of features per image. To re-create pretrained features with 36 features
 # per image, set both values to 36.
@@ -47,25 +56,20 @@ def load_image_ids(img_root, split_dir):
     """images in the same directory are in the same sequential region,
     but with no internal ordering"""
     pathXid = []
-    if split_dir == 'train':
+    if split_dir == "train":
         img_root = os.path.join(img_root, split_dir)
         for d in os.listdir(img_root):
             dir_path = os.path.join(img_root, d)
             for name in os.listdir(dir_path):
                 idx = name.split(".")[0]
-                pathXid.append(
-                        (
-                            os.path.join(dir_path, name),
-                            idx))
+                pathXid.append((os.path.join(dir_path, name), idx))
     else:
         img_root = os.path.join(img_root, split_dir)
         for name in os.listdir(img_root):
             idx = name.split(".")[0]
-            pathXid.append(
-                    (
-                        os.path.join(img_root, name),
-                        idx))
+            pathXid.append((os.path.join(img_root, name), idx))
     return pathXid
+
 
 def generate_tsv(prototxt, weights, image_ids, outfile):
     # First check if file exists, and if it is complete
@@ -74,20 +78,20 @@ def generate_tsv(prototxt, weights, image_ids, outfile):
     found_ids = set()
     if os.path.exists(outfile):
         with open(outfile, "r") as tsvfile:
-            reader = csv.DictReader(tsvfile, delimiter='\t', fieldnames=FIELDNAMES)
+            reader = csv.DictReader(tsvfile, delimiter="\t", fieldnames=FIELDNAMES)
             for item in reader:
-                found_ids.add(item['img_id'])
+                found_ids.add(item["img_id"])
     missing = wanted_ids - found_ids
     if len(missing) == 0:
-        print('already completed {:d}'.format(len(image_ids)))
+        print("already completed {:d}".format(len(image_ids)))
     else:
-        print('missing {:d}/{:d}'.format(len(missing), len(image_ids)))
+        print("missing {:d}/{:d}".format(len(missing), len(image_ids)))
     if len(missing) > 0:
         caffe.set_mode_gpu()
         caffe.set_device(0)
         net = caffe.Net(prototxt, caffe.TEST, weights=weights)
-        with open(outfile, 'ab') as tsvfile:
-            writer = csv.DictWriter(tsvfile, delimiter='\t', fieldnames=FIELDNAMES)
+        with open(outfile, "ab") as tsvfile:
+            writer = csv.DictWriter(tsvfile, delimiter="\t", fieldnames=FIELDNAMES)
             for im_file, image_id in tqdm(image_ids):
                 if image_id in missing:
                     try:
@@ -108,14 +112,14 @@ def get_detections_from_im(net, im_file, image_id, conf_thresh=0.2):
     scores, boxes, attr_scores, rel_scores = im_detect(net, im)
 
     # Keep the original boxes, don't worry about the regresssion bbox outputs
-    rois = net.blobs['rois'].data.copy()
+    rois = net.blobs["rois"].data.copy()
     # unscale back to raw image space
     blobs, im_scales = _get_blobs(im, None)
 
     cls_boxes = rois[:, 1:5] / im_scales[0]
-    cls_prob = net.blobs['cls_prob'].data
-    attr_prob = net.blobs['attr_prob'].data
-    pool5 = net.blobs['pool5_flat'].data
+    cls_prob = net.blobs["cls_prob"].data
+    attr_prob = net.blobs["attr_prob"].data
+    pool5 = net.blobs["pool5_flat"].data
 
     # Keep only the best detections
     max_conf = np.zeros((rois.shape[0]))
@@ -123,7 +127,9 @@ def get_detections_from_im(net, im_file, image_id, conf_thresh=0.2):
         cls_scores = scores[:, cls_ind]
         dets = np.hstack((cls_boxes, cls_scores[:, np.newaxis])).astype(np.float32)
         keep = np.array(nms(dets, cfg.TEST.NMS))
-        max_conf[keep] = np.where(cls_scores[keep] > max_conf[keep], cls_scores[keep], max_conf[keep])
+        max_conf[keep] = np.where(
+            cls_scores[keep] > max_conf[keep], cls_scores[keep], max_conf[keep]
+        )
 
     keep_boxes = np.where(max_conf >= conf_thresh)[0]
     if len(keep_boxes) < MIN_BOXES:
@@ -146,7 +152,7 @@ def get_detections_from_im(net, im_file, image_id, conf_thresh=0.2):
         "attrs_conf": base64.b64encode(attrs_conf),  # float32
         "num_boxes": len(keep_boxes),
         "boxes": base64.b64encode(cls_boxes[keep_boxes]),  # float32
-        "features": base64.b64encode(pool5[keep_boxes])  # float32
+        "features": base64.b64encode(pool5[keep_boxes]),  # float32
     }
 
 
@@ -154,49 +160,68 @@ def parse_args():
     """
     Parse input arguments
     """
-    parser = argparse.ArgumentParser(description='Generate bbox output from a Fast R-CNN network')
-    parser.add_argument('--gpu', dest='gpu_id', help='GPU id(s) to use',
-                        default='0', type=str)
-    parser.add_argument('--def', dest='prototxt',
-                        help='prototxt file defining the network',
-                        default=None, type=str)
-    parser.add_argument('--out', dest='outfile',
-                        help='output filepath',
-                        default=None, type=str)
-    parser.add_argument('--cfg', dest='cfg_file',
-                        help='optional config file', default=None, type=str)
-    parser.add_argument('--set', dest='set_cfgs',
-                        help='set config keys', default=None,
-                        nargs=argparse.REMAINDER)
-    parser.add_argument('--imgroot', type=str, default='/workspace/images/')
-    parser.add_argument('--split', type=str, default='valid')
-    parser.add_argument('--caffemodel', type=str, default='./resnet101_faster_rcnn_final_iter_320000.caffemodel')
+    parser = argparse.ArgumentParser(
+        description="Generate bbox output from a Fast R-CNN network"
+    )
+    parser.add_argument(
+        "--gpu", dest="gpu_id", help="GPU id(s) to use", default="0", type=str
+    )
+    parser.add_argument(
+        "--def",
+        dest="prototxt",
+        help="prototxt file defining the network",
+        default=None,
+        type=str,
+    )
+    parser.add_argument(
+        "--out", dest="outfile", help="output filepath", default=None, type=str
+    )
+    parser.add_argument(
+        "--cfg", dest="cfg_file", help="optional config file", default=None, type=str
+    )
+    parser.add_argument(
+        "--set",
+        dest="set_cfgs",
+        help="set config keys",
+        default=None,
+        nargs=argparse.REMAINDER,
+    )
+    parser.add_argument("--imgroot", type=str, default="/workspace/images/")
+    parser.add_argument("--split", type=str, default="valid")
+    parser.add_argument(
+        "--caffemodel",
+        type=str,
+        default="./resnet101_faster_rcnn_final_iter_320000.caffemodel",
+    )
 
     args = parser.parse_args()
     return args
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Setup the configuration, normally do not need to touch these:
     args = parse_args()
 
-
-    args.cfg_file = BUTD_ROOT + "experiments/cfgs/faster_rcnn_end2end_resnet.yml" # s = 500
-    args.prototxt = BUTD_ROOT + "models/vg/ResNet-101/faster_rcnn_end2end_final/test.prototxt"
+    args.cfg_file = (
+        BUTD_ROOT + "experiments/cfgs/faster_rcnn_end2end_resnet.yml"
+    )  # s = 500
+    args.prototxt = (
+        BUTD_ROOT + "models/vg/ResNet-101/faster_rcnn_end2end_final/test.prototxt"
+    )
     args.outfile = "%s_obj36.tsv" % args.split
-    
-    print('Called with args:')
+
+    print("Called with args:")
     print(args)
 
     if args.cfg_file is not None:
         cfg_from_file(args.cfg_file)
 
-    print('Using config:')
+    print("Using config:")
     pprint.pprint(cfg)
     assert cfg.TEST.HAS_RPN
 
     # Load image ids, need modification for new datasets.
-    image_ids = load_image_ids(args.imgroot, SPLIT2DIR[args.split])  
-    
+    image_ids = load_image_ids(args.imgroot, SPLIT2DIR[args.split])
+
     # Generate TSV files, noramlly do not need to modify
     generate_tsv(args.prototxt, args.caffemodel, image_ids, args.outfile)

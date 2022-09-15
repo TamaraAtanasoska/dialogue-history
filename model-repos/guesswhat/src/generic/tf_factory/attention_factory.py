@@ -13,18 +13,19 @@ def get_attention(feature_map, lstm, config, dropout_keep=1, reuse=False):
         image_out = tf.reduce_mean(feature_map, axis=(1, 2))
 
     elif attention_mode == "classic":
-        image_out = compute_attention(feature_map,
-                                      lstm,
-                                      no_mlp_units=config['no_attention_mlp'],
-                                      reuse=reuse)
+        image_out = compute_attention(
+            feature_map, lstm, no_mlp_units=config["no_attention_mlp"], reuse=reuse
+        )
 
     elif attention_mode == "glimpse":
-        image_out = compute_glimpse(feature_map,
-                                    lstm,
-                                    no_glimpse=config['no_glimpses'],
-                                    glimpse_embedding_size=config['no_attention_mlp'],
-                                    keep_dropout=dropout_keep,
-                                    reuse=reuse)
+        image_out = compute_glimpse(
+            feature_map,
+            lstm,
+            no_glimpse=config["no_glimpses"],
+            glimpse_embedding_size=config["no_attention_mlp"],
+            keep_dropout=dropout_keep,
+            reuse=reuse,
+        )
 
     else:
         assert False, "Wrong attention mode: {}".format(attention_mode)

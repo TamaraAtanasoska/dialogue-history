@@ -2,7 +2,7 @@ import math
 import random
 from multiprocessing import Semaphore
 
-#Note from author : we put extra documentation as we beleive that this class can be very useful to other developers
+# Note from author : we put extra documentation as we beleive that this class can be very useful to other developers
 
 
 def sem_iterator(l, sem):
@@ -50,8 +50,16 @@ def split_batch(games, batch_size, use_padding):
 class Iterator(object):
     """Provides an generic multithreaded iterator over the dataset."""
 
-    def __init__(self, dataset, batch_size, batchifier, pool,
-                 shuffle= False, use_padding = False, no_semaphore= 20):
+    def __init__(
+        self,
+        dataset,
+        batch_size,
+        batchifier,
+        pool,
+        shuffle=False,
+        use_padding=False,
+        no_semaphore=20,
+    ):
 
         # Filtered games
         games = dataset.get_data()
@@ -63,7 +71,7 @@ class Iterator(object):
         self.n_examples = len(games)
         self.batch_size = batch_size
 
-        self.n_batches = int(math.ceil(1. * self.n_examples / self.batch_size))
+        self.n_batches = int(math.ceil(1.0 * self.n_examples / self.batch_size))
         batch = split_batch(games, batch_size, use_padding)
 
         # no proc
@@ -83,7 +91,7 @@ class Iterator(object):
     def __next__(self):
         self.semaphores.release()
         return self.process_iterator.next()
-        #return self.it.__next__()
+        # return self.it.__next__()
 
     # trick for python 2.X
     def next(self):
@@ -103,11 +111,11 @@ class BasicIterator(object):
         self.n_examples = len(games)
         self.batch_size = batch_size
 
-        self.n_batches = int(math.ceil(1. * self.n_examples / self.batch_size))
+        self.n_batches = int(math.ceil(1.0 * self.n_examples / self.batch_size))
         batch = split_batch(games, batch_size, use_padding)
 
         # no proc
-        self.it = (batchifier.apply(b )for b in batch)
+        self.it = (batchifier.apply(b) for b in batch)
 
     def __len__(self):
         return self.n_batches

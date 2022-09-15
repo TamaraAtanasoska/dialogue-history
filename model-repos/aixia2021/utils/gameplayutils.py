@@ -26,11 +26,7 @@ def anspred2wordtok(answer_predictions, word2i):
     :param word2i: dictionary, mapping words to word tokens
     :returns: Bx1
     """
-    anspredIDX2anstok = {
-        0: word2i['<no>'],
-        1: word2i['<yes>'],
-        2: word2i['<n/a>']
-    }
+    anspredIDX2anstok = {0: word2i["<no>"], 1: word2i["<yes>"], 2: word2i["<n/a>"]}
 
     _tokens = answer_predictions.topk(1)[1].data
     answer_tokens = to_var(torch.LongTensor(_tokens.size(0), _tokens.size(1)).fill_(0))
@@ -41,7 +37,9 @@ def anspred2wordtok(answer_predictions, word2i):
     return answer_tokens
 
 
-def append_dialogue(dialogue, dialogue_length, new_questions, question_length, answer_tokens, pad_token):
+def append_dialogue(
+    dialogue, dialogue_length, new_questions, question_length, answer_tokens, pad_token
+):
     """
     Given a dialogue history, will append a new question and its answer to it.
     Will take care of padding, possible cutting off (if required) the dialogue as well as
@@ -61,9 +59,9 @@ def append_dialogue(dialogue, dialogue_length, new_questions, question_length, a
         # put new dialogue together from old dialogue + new question + answer
         updated_dialogue = torch.cat(
             [
-                dialogue[qi][:dialogue_length[qi].item()],
-                new_questions[qi, :question_length.data[qi]],
-                answer_tokens[qi]
+                dialogue[qi][: dialogue_length[qi].item()],
+                new_questions[qi, : question_length.data[qi]],
+                answer_tokens[qi],
             ]
         )
 
@@ -73,7 +71,11 @@ def append_dialogue(dialogue, dialogue_length, new_questions, question_length, a
         # strip and pad
         updated_dialogue = updated_dialogue[:max_dialogue_length]
         if updated_dialogue.size(0) < dialogue.size(1):
-            dialogue_pad = to_var(torch.Tensor(max_dialogue_length - updated_dialogue.size(0)).fill_(pad_token).long())
+            dialogue_pad = to_var(
+                torch.Tensor(max_dialogue_length - updated_dialogue.size(0))
+                .fill_(pad_token)
+                .long()
+            )
             updated_dialogue = torch.cat([updated_dialogue, dialogue_pad])
 
         dialogue[qi] = updated_dialogue.unsqueeze(0)
@@ -81,7 +83,9 @@ def append_dialogue(dialogue, dialogue_length, new_questions, question_length, a
     return dialogue, dialogue_length
 
 
-def append_dialogue_bert(history_raw, new_questions, question_length, answer_tokens, pad_token, i2word):
+def append_dialogue_bert(
+    history_raw, new_questions, question_length, answer_tokens, pad_token, i2word
+):
     """
     Given a dialogue history, will append a new question and its answer to it.
     Will take care of padding, possible cutting off (if required) the dialogue as well as
@@ -96,9 +100,13 @@ def append_dialogue_bert(history_raw, new_questions, question_length, answer_tok
 
     for qi, q in enumerate(new_questions):
         q_tmp = " ".join([i2word[str(i.item())] for i in q])
-        q_tmp = q_tmp[:q_tmp.index("?") + 1]
+        q_tmp = q_tmp[: q_tmp.index("?") + 1]
         history_raw[qi] += q_tmp
-        history_raw[qi] += " " + i2word[str(answer_tokens[qi].item())].replace("<", "").replace(">", "") + " "
+        history_raw[qi] += (
+            " "
+            + i2word[str(answer_tokens[qi].item())].replace("<", "").replace(">", "")
+            + " "
+        )
 
     return history_raw
 
@@ -115,9 +123,9 @@ def dialtok2dial(dialogue, i2word):
     for bid in range(dialogue.size(0)):
         dial = str()
         for i in dialogue[bid]:
-            dial += i2word[str(i.item())] + ' '
+            dial += i2word[str(i.item())] + " "
             if dial.split()[-2:] == ["<padding>", "<padding>"]:
-                dial = ' '.join(dial.split()[:-2])
+                dial = " ".join(dial.split()[:-2])
                 break
 
         batch_dial.append(dial)

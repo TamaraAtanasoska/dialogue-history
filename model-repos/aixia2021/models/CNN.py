@@ -4,10 +4,12 @@ from torchvision.models import resnet
 
 use_cuda = torch.cuda.is_available()
 
+
 class ResNet(nn.Module):
     """
     This is a placeholder till the features are stored. Also, this exists to get final mile improvements by fine-tuning the ResNet.
     """
+
     def __init__(self):
         super(ResNet, self).__init__()
 
@@ -33,7 +35,9 @@ class ResNet(nn.Module):
         img_features = self.modifiedCNN(img)
         avg_img_features = self.avgpool(img_features)
 
-        img_features = img_features.view(img_features.size(0), img_features.size(1), -1).transpose(1,2)
+        img_features = img_features.view(
+            img_features.size(0), img_features.size(1), -1
+        ).transpose(1, 2)
         avg_img_features = avg_img_features.view(avg_img_features.size(0), -1)
 
         return img_features, avg_img_features

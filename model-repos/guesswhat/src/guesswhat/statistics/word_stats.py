@@ -1,4 +1,3 @@
-
 import collections
 
 import re
@@ -8,9 +7,33 @@ from guesswhat.statistics.abstract_plotter import *
 import pandas as pd
 import seaborn as sns
 
-stopwords = ["a", "an", "is", "it", "the", "does", "do", "are", "you", "that",
-             "they", "doe", "this", "there", "hi", "his", "her", "its", "picture", "can", "he", "she", "bu", "us",
-             "photo"]
+stopwords = [
+    "a",
+    "an",
+    "is",
+    "it",
+    "the",
+    "does",
+    "do",
+    "are",
+    "you",
+    "that",
+    "they",
+    "doe",
+    "this",
+    "there",
+    "hi",
+    "his",
+    "her",
+    "its",
+    "picture",
+    "can",
+    "he",
+    "she",
+    "bu",
+    "us",
+    "photo",
+]
 
 
 class WordStat(AbstractPlotter):
@@ -25,8 +48,8 @@ class WordStat(AbstractPlotter):
             # split questions into words
             for q in game.questions:
                 questions.append(q)
-                q = re.sub('[?]', '', q)
-                words = re.findall(r'\w+', q)
+                q = re.sub("[?]", "", q)
+                words = re.findall(r"\w+", q)
                 word_list.append(words)
 
                 for w in words:
@@ -48,8 +71,6 @@ class WordStat(AbstractPlotter):
         logger.info("50 most common words")
         logger.info(word_counter.most_common(50))
 
-
-
     # override matplotlib methods
     def plot(self):
         pass
@@ -57,6 +78,3 @@ class WordStat(AbstractPlotter):
     # override matplotlib methods
     def save_as_pdf(self):
         pass
-
-
-

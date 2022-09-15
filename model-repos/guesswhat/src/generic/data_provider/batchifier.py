@@ -1,5 +1,4 @@
 class AbstractBatchifier(object):
-
     def filter(self, games):
         return games
 

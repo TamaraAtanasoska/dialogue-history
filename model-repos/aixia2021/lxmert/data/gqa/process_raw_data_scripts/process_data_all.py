@@ -1,19 +1,19 @@
 import json
 from pathlib import Path
 
-GQA_ROOT = '../'
+GQA_ROOT = "../"
 
-path = Path(GQA_ROOT + 'data')
+path = Path(GQA_ROOT + "data")
 split2name = {
-    'train': 'train',
-    'valid': 'val',
-    'testdev': 'testdev',
-    }
+    "train": "train",
+    "valid": "val",
+    "testdev": "testdev",
+}
 
 for split, name in split2name.items():
     new_data = []
-    if split == 'train':
-        paths = list((path / 'train_all_questions').iterdir())
+    if split == "train":
+        paths = list((path / "train_all_questions").iterdir())
     else:
         paths = [path / ("%s_all_questions.json" % name)]
     print(split, paths)
@@ -23,14 +23,12 @@ for split, name in split2name.items():
             data = json.load(f)
             for key, datum in data.items():
                 new_datum = {
-                    'question_id': key,
-                    'img_id': datum['imageId'],
-                    'sent': datum['question'],
+                    "question_id": key,
+                    "img_id": datum["imageId"],
+                    "sent": datum["question"],
                 }
-                if 'answer' in datum:
-                    new_datum['label'] = {datum['answer']: 1.}
+                if "answer" in datum:
+                    new_datum["label"] = {datum["answer"]: 1.0}
                 new_data.append(new_datum)
     print(split, len(new_data))
-    json.dump(new_data, open("../%s_all.json" % split, 'w'),
-              indent=4, sort_keys=True)
-
+    json.dump(new_data, open("../%s_all.json" % split, "w"), indent=4, sort_keys=True)

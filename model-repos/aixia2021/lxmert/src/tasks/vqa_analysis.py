@@ -17,17 +17,20 @@ from tasks.vqa_model import VQAModel
 from torch.utils.data.dataloader import DataLoader
 from tqdm import tqdm
 
-DataTuple = collections.namedtuple("DataTuple", 'dataset loader evaluator')
+DataTuple = collections.namedtuple("DataTuple", "dataset loader evaluator")
 
 
-def get_data_tuple(splits: str, bs:int, shuffle=False, drop_last=False) -> DataTuple:
+def get_data_tuple(splits: str, bs: int, shuffle=False, drop_last=False) -> DataTuple:
     dset = VQADataset(splits)
     tset = VQATorchDataset(dset)
     evaluator = VQAEvaluator(dset)
     data_loader = DataLoader(
-        tset, batch_size=bs,
-        shuffle=shuffle, num_workers=args.num_workers,
-        drop_last=drop_last, pin_memory=True
+        tset,
+        batch_size=bs,
+        shuffle=shuffle,
+        num_workers=args.num_workers,
+        drop_last=drop_last,
+        pin_memory=True,
     )
 
     return DataTuple(dataset=dset, loader=data_loader, evaluator=evaluator)
@@ -41,12 +44,11 @@ class VQA:
         )
         if args.valid != "":
             self.valid_tuple = get_data_tuple(
-                args.valid, bs=1024,
-                shuffle=False, drop_last=False
+                args.valid, bs=1024, shuffle=False, drop_last=False
             )
         else:
             self.valid_tuple = None
-        
+
         # Model
         self.model = VQAModel(self.train_tuple.dataset.num_answers)
 
@@ -54,9 +56,12 @@ class VQA:
         if args.load_lxmert is not None:
             self.model.lxrt_encoder.load(args.load_lxmert)
         if args.load_lxmert_qa is not None:
-            load_lxmert_qa(args.load_lxmert_qa, self.model,
-                           label2ans=self.train_tuple.dataset.label2ans)
-        
+            load_lxmert_qa(
+                args.load_lxmert_qa,
+                self.model,
+                label2ans=self.train_tuple.dataset.label2ans,
+            )
+
         # GPU options
         self.model = self.model.cuda()
         if args.multiGPU:
@@ -64,30 +69,34 @@ class VQA:
 
         # Loss and Optimizer
         self.bce_loss = nn.BCEWithLogitsLoss()
-        if 'bert' in args.optim:
+        if "bert" in args.optim:
             batch_per_epoch = len(self.train_tuple.loader)
             t_total = int(batch_per_epoch * args.epochs)
             print("BertAdam Total Iters: %d" % t_total)
             from lxrt.optimization import BertAdam
-            self.optim = BertAdam(list(self.model.parameters()),
-                                  lr=args.lr,
-                                  warmup=0.1,
-                                  t_total=t_total)
+
+            self.optim = BertAdam(
+                list(self.model.parameters()), lr=args.lr, warmup=0.1, t_total=t_total
+            )
         else:
             self.optim = args.optimizer(self.model.parameters(), args.lr)
-        
+
         # Output Directory
         self.output = args.output
         os.makedirs(self.output, exist_ok=True)
 
     def train(self, train_tuple, eval_tuple):
         dset, loader, evaluator = train_tuple
-        iter_wrapper = (lambda x: tqdm(x, total=len(loader))) if args.tqdm else (lambda x: x)
+        iter_wrapper = (
+            (lambda x: tqdm(x, total=len(loader))) if args.tqdm else (lambda x: x)
+        )
 
-        best_valid = 0.
+        best_valid = 0.0
         for epoch in range(args.epochs):
             quesid2ans = {}
-            for i, (ques_id, feats, boxes, sent, target) in iter_wrapper(enumerate(loader)):
+            for i, (ques_id, feats, boxes, sent, target) in iter_wrapper(
+                enumerate(loader)
+            ):
 
                 self.model.train()
                 self.optim.zero_grad()
@@ -99,7 +108,7 @@ class VQA:
                 loss = loss * logit.size(1)
 
                 loss.backward()
-                nn.utils.clip_grad_norm_(self.model.parameters(), 5.)
+                nn.utils.clip_grad_norm_(self.model.parameters(), 5.0)
                 self.optim.step()
 
                 score, label = logit.max(1)
@@ -107,7 +116,10 @@ class VQA:
                     ans = dset.label2ans[l]
                     quesid2ans[qid.item()] = ans
 
-            log_str = "\nEpoch %d: Train %0.2f\n" % (epoch, evaluator.evaluate(quesid2ans) * 100.)
+            log_str = "\nEpoch %d: Train %0.2f\n" % (
+                epoch,
+                evaluator.evaluate(quesid2ans) * 100.0,
+            )
 
             if self.valid_tuple is not None:  # Do Validation
                 valid_score = self.evaluate(eval_tuple)
@@ -115,12 +127,14 @@ class VQA:
                     best_valid = valid_score
                     self.save("BEST")
 
-                log_str += "Epoch %d: Valid %0.2f\n" % (epoch, valid_score * 100.) + \
-                           "Epoch %d: Best %0.2f\n" % (epoch, best_valid * 100.)
+                log_str += "Epoch %d: Valid %0.2f\n" % (
+                    epoch,
+                    valid_score * 100.0,
+                ) + "Epoch %d: Best %0.2f\n" % (epoch, best_valid * 100.0)
 
-            print(log_str, end='')
+            print(log_str, end="")
 
-            with open(self.output + "/log.log", 'a') as f:
+            with open(self.output + "/log.log", "a") as f:
                 f.write(log_str)
                 f.flush()
 
@@ -139,17 +153,16 @@ class VQA:
 
         question_id2img_id = {x["question_id"]: x["img_id"] for x in dset.data}
         tokenizer = BertTokenizer.from_pretrained(
-            "bert-base-uncased",
-            do_lower_case=True
+            "bert-base-uncased", do_lower_case=True
         )
-        plt.rcParams['figure.figsize'] = (12, 10)
+        plt.rcParams["figure.figsize"] = (12, 10)
         num_regions = 36
 
         count = 0
 
         quesid2ans = {}
         for i, datum_tuple in enumerate(loader):
-            ques_id, feats, boxes, sent = datum_tuple[:4]   # Avoid seeing ground truth
+            ques_id, feats, boxes, sent = datum_tuple[:4]  # Avoid seeing ground truth
             with torch.no_grad():
                 feats, boxes = feats.cuda(), boxes.cuda()
                 logit = self.model(feats, boxes, sent)
@@ -159,40 +172,71 @@ class VQA:
                         for datapoint in range(len(sent)):
                             print(count, len(sent))
                             count += 1
-                            lang2vis_attention_probs = self.model.lxrt_encoder.model.bert.encoder.x_layers[
-                                layer].lang_att_map[datapoint][head].detach().cpu().numpy()
+                            lang2vis_attention_probs = (
+                                self.model.lxrt_encoder.model.bert.encoder.x_layers[
+                                    layer
+                                ]
+                                .lang_att_map[datapoint][head]
+                                .detach()
+                                .cpu()
+                                .numpy()
+                            )
 
-                            vis2lang_attention_probs = self.model.lxrt_encoder.model.bert.encoder.x_layers[
-                                layer].visn_att_map[datapoint][head].detach().cpu().numpy()
+                            vis2lang_attention_probs = (
+                                self.model.lxrt_encoder.model.bert.encoder.x_layers[
+                                    layer
+                                ]
+                                .visn_att_map[datapoint][head]
+                                .detach()
+                                .cpu()
+                                .numpy()
+                            )
 
                             plt.clf()
 
                             plt.subplot(2, 3, 1)
                             plt.gca().set_axis_off()
                             plt.title("Image (regions 0-7)")
-                            im = cv2.imread(os.path.join("/mnt/8tera/claudio.greco/mscoco_trainval_2014",
-                                                         question_id2img_id[ques_id[datapoint].item()]) + ".jpg")
+                            im = cv2.imread(
+                                os.path.join(
+                                    "/mnt/8tera/claudio.greco/mscoco_trainval_2014",
+                                    question_id2img_id[ques_id[datapoint].item()],
+                                )
+                                + ".jpg"
+                            )
                             im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
                             plt.imshow(im)
 
                             plt.subplot(2, 3, 2)
                             plt.gca().set_axis_off()
                             plt.title("Image (regions 8-15)")
-                            im = cv2.imread(os.path.join("/mnt/8tera/claudio.greco/mscoco_trainval_2014",
-                                                         question_id2img_id[ques_id[datapoint].item()]) + ".jpg")
+                            im = cv2.imread(
+                                os.path.join(
+                                    "/mnt/8tera/claudio.greco/mscoco_trainval_2014",
+                                    question_id2img_id[ques_id[datapoint].item()],
+                                )
+                                + ".jpg"
+                            )
                             im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
                             plt.imshow(im)
 
                             plt.subplot(2, 3, 3)
                             plt.gca().set_axis_off()
                             plt.title("Image (regions 16-35)")
-                            im = cv2.imread(os.path.join("/mnt/8tera/claudio.greco/mscoco_trainval_2014",
-                                                         question_id2img_id[ques_id[datapoint].item()]) + ".jpg")
+                            im = cv2.imread(
+                                os.path.join(
+                                    "/mnt/8tera/claudio.greco/mscoco_trainval_2014",
+                                    question_id2img_id[ques_id[datapoint].item()],
+                                )
+                                + ".jpg"
+                            )
                             im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
                             plt.imshow(im)
 
-                            img_info = loader.dataset.imgid2img[question_id2img_id[ques_id[datapoint].item()]]
-                            img_h, img_w = img_info['img_h'], img_info['img_w']
+                            img_info = loader.dataset.imgid2img[
+                                question_id2img_id[ques_id[datapoint].item()]
+                            ]
+                            img_h, img_w = img_info["img_h"], img_info["img_w"]
                             unnormalized_boxes = boxes[datapoint].clone()
                             unnormalized_boxes[:, (0, 2)] *= img_w
                             unnormalized_boxes[:, (1, 3)] *= img_h
@@ -205,7 +249,12 @@ class VQA:
                                 else:
                                     plt.subplot(2, 3, 3)
 
-                                bbox = [bbox[0].item(), bbox[1].item(), bbox[2].item(), bbox[3].item()]
+                                bbox = [
+                                    bbox[0].item(),
+                                    bbox[1].item(),
+                                    bbox[2].item(),
+                                    bbox[3].item(),
+                                ]
 
                                 if bbox[0] == 0:
                                     bbox[0] = 2
@@ -213,32 +262,50 @@ class VQA:
                                     bbox[1] = 2
 
                                 plt.gca().add_patch(
-                                    plt.Rectangle((bbox[0], bbox[1]),
-                                                  bbox[2] - bbox[0] - 4,
-                                                  bbox[3] - bbox[1] - 4, fill=False,
-                                                  edgecolor='red', linewidth=1)
+                                    plt.Rectangle(
+                                        (bbox[0], bbox[1]),
+                                        bbox[2] - bbox[0] - 4,
+                                        bbox[3] - bbox[1] - 4,
+                                        fill=False,
+                                        edgecolor="red",
+                                        linewidth=1,
+                                    )
                                 )
 
-                                plt.gca().text(bbox[0], bbox[1] - 2,
-                                               '%s' % i,
-                                               bbox=dict(facecolor='blue'),
-                                               fontsize=9, color='white')
+                                plt.gca().text(
+                                    bbox[0],
+                                    bbox[1] - 2,
+                                    "%s" % i,
+                                    bbox=dict(facecolor="blue"),
+                                    fontsize=9,
+                                    color="white",
+                                )
 
                             ax = plt.subplot(2, 1, 2)
                             plt.title("Cross-modal attention lang2vis")
 
                             tokenized_question = tokenizer.tokenize(sent[datapoint])
-                            tokenized_question = ["<CLS>"] + tokenized_question + ["<SEP>"]
+                            tokenized_question = (
+                                ["<CLS>"] + tokenized_question + ["<SEP>"]
+                            )
 
-                            transposed_attention_map = lang2vis_attention_probs[:len(tokenized_question), :num_regions]
+                            transposed_attention_map = lang2vis_attention_probs[
+                                : len(tokenized_question), :num_regions
+                            ]
                             im = plt.imshow(transposed_attention_map, vmin=0, vmax=1)
 
                             for i in range(len(tokenized_question)):
                                 for j in range(num_regions):
                                     att_value = round(transposed_attention_map[i, j], 1)
-                                    text = ax.text(j, i, att_value,
-                                                   ha="center", va="center", color="w" if att_value <= 0.5 else "b",
-                                                   fontsize=6)
+                                    text = ax.text(
+                                        j,
+                                        i,
+                                        att_value,
+                                        ha="center",
+                                        va="center",
+                                        color="w" if att_value <= 0.5 else "b",
+                                        fontsize=6,
+                                    )
 
                             ax.set_xticks(np.arange(num_regions))
                             ax.set_xticklabels(list(range(num_regions)))
@@ -249,9 +316,12 @@ class VQA:
                             plt.tight_layout()
                             # plt.gca().set_axis_off()
                             plt.savefig(
-                                "/mnt/8tera/claudio.greco/guesswhat_lxmert/guesswhat/visualization_vqa/lang2vis_question_{}_layer_{}_head_{}.png"
-                                    .format(ques_id[datapoint].item(), layer, head),
-                                bbox_inches='tight', pad_inches=0.5)
+                                "/mnt/8tera/claudio.greco/guesswhat_lxmert/guesswhat/visualization_vqa/lang2vis_question_{}_layer_{}_head_{}.png".format(
+                                    ques_id[datapoint].item(), layer, head
+                                ),
+                                bbox_inches="tight",
+                                pad_inches=0.5,
+                            )
 
                             plt.close()
 
@@ -262,29 +332,46 @@ class VQA:
                             plt.subplot(2, 3, 1)
                             plt.gca().set_axis_off()
                             plt.title("Image (regions 0-7)")
-                            im = cv2.imread(os.path.join("/mnt/8tera/claudio.greco/mscoco_trainval_2014",
-                                                         question_id2img_id[ques_id[datapoint].item()]) + ".jpg")
+                            im = cv2.imread(
+                                os.path.join(
+                                    "/mnt/8tera/claudio.greco/mscoco_trainval_2014",
+                                    question_id2img_id[ques_id[datapoint].item()],
+                                )
+                                + ".jpg"
+                            )
                             im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
                             plt.imshow(im)
 
                             plt.subplot(2, 3, 2)
                             plt.gca().set_axis_off()
                             plt.title("Image (regions 8-15)")
-                            im = cv2.imread(os.path.join("/mnt/8tera/claudio.greco/mscoco_trainval_2014",
-                                                         question_id2img_id[ques_id[datapoint].item()]) + ".jpg")
+                            im = cv2.imread(
+                                os.path.join(
+                                    "/mnt/8tera/claudio.greco/mscoco_trainval_2014",
+                                    question_id2img_id[ques_id[datapoint].item()],
+                                )
+                                + ".jpg"
+                            )
                             im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
                             plt.imshow(im)
 
                             plt.subplot(2, 3, 3)
                             plt.gca().set_axis_off()
                             plt.title("Image (regions 16-35)")
-                            im = cv2.imread(os.path.join("/mnt/8tera/claudio.greco/mscoco_trainval_2014",
-                                                         question_id2img_id[ques_id[datapoint].item()]) + ".jpg")
+                            im = cv2.imread(
+                                os.path.join(
+                                    "/mnt/8tera/claudio.greco/mscoco_trainval_2014",
+                                    question_id2img_id[ques_id[datapoint].item()],
+                                )
+                                + ".jpg"
+                            )
                             im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
                             plt.imshow(im)
 
-                            img_info = loader.dataset.imgid2img[question_id2img_id[ques_id[datapoint].item()]]
-                            img_h, img_w = img_info['img_h'], img_info['img_w']
+                            img_info = loader.dataset.imgid2img[
+                                question_id2img_id[ques_id[datapoint].item()]
+                            ]
+                            img_h, img_w = img_info["img_h"], img_info["img_w"]
                             unnormalized_boxes = boxes[datapoint].clone()
                             unnormalized_boxes[:, (0, 2)] *= img_w
                             unnormalized_boxes[:, (1, 3)] *= img_h
@@ -297,7 +384,12 @@ class VQA:
                                 else:
                                     plt.subplot(2, 3, 3)
 
-                                bbox = [bbox[0].item(), bbox[1].item(), bbox[2].item(), bbox[3].item()]
+                                bbox = [
+                                    bbox[0].item(),
+                                    bbox[1].item(),
+                                    bbox[2].item(),
+                                    bbox[3].item(),
+                                ]
 
                                 if bbox[0] == 0:
                                     bbox[0] = 2
@@ -305,32 +397,52 @@ class VQA:
                                     bbox[1] = 2
 
                                 plt.gca().add_patch(
-                                    plt.Rectangle((bbox[0], bbox[1]),
-                                                  bbox[2] - bbox[0] - 4,
-                                                  bbox[3] - bbox[1] - 4, fill=False,
-                                                  edgecolor='red', linewidth=1)
+                                    plt.Rectangle(
+                                        (bbox[0], bbox[1]),
+                                        bbox[2] - bbox[0] - 4,
+                                        bbox[3] - bbox[1] - 4,
+                                        fill=False,
+                                        edgecolor="red",
+                                        linewidth=1,
+                                    )
                                 )
 
-                                plt.gca().text(bbox[0], bbox[1] - 2,
-                                               '%s' % i,
-                                               bbox=dict(facecolor='blue'),
-                                               fontsize=9, color='white')
+                                plt.gca().text(
+                                    bbox[0],
+                                    bbox[1] - 2,
+                                    "%s" % i,
+                                    bbox=dict(facecolor="blue"),
+                                    fontsize=9,
+                                    color="white",
+                                )
 
                             ax = plt.subplot(2, 1, 2)
                             plt.title("Cross-modal attention vis2lang")
 
                             tokenized_question = tokenizer.tokenize(sent[datapoint])
-                            tokenized_question = ["<CLS>"] + tokenized_question + ["<SEP>"]
+                            tokenized_question = (
+                                ["<CLS>"] + tokenized_question + ["<SEP>"]
+                            )
 
-                            transposed_attention_map = vis2lang_attention_probs.transpose()[:len(tokenized_question), :num_regions]
+                            transposed_attention_map = (
+                                vis2lang_attention_probs.transpose()[
+                                    : len(tokenized_question), :num_regions
+                                ]
+                            )
                             im = plt.imshow(transposed_attention_map, vmin=0, vmax=1)
 
                             for i in range(len(tokenized_question)):
                                 for j in range(num_regions):
                                     att_value = round(transposed_attention_map[i, j], 1)
-                                    text = ax.text(j, i, att_value,
-                                                   ha="center", va="center", color="w" if att_value <= 0.5 else "b",
-                                                   fontsize=6)
+                                    text = ax.text(
+                                        j,
+                                        i,
+                                        att_value,
+                                        ha="center",
+                                        va="center",
+                                        color="w" if att_value <= 0.5 else "b",
+                                        fontsize=6,
+                                    )
 
                             ax.set_xticks(np.arange(num_regions))
                             ax.set_xticklabels(list(range(num_regions)))
@@ -341,12 +453,14 @@ class VQA:
                             plt.tight_layout()
                             # plt.gca().set_axis_off()
                             plt.savefig(
-                                "/mnt/8tera/claudio.greco/guesswhat_lxmert/guesswhat/visualization_vqa/vis2lang_question_{}_layer_{}_head_{}.png"
-                                    .format(ques_id[datapoint].item(), layer, head),
-                                bbox_inches='tight', pad_inches=0.5)
+                                "/mnt/8tera/claudio.greco/guesswhat_lxmert/guesswhat/visualization_vqa/vis2lang_question_{}_layer_{}_head_{}.png".format(
+                                    ques_id[datapoint].item(), layer, head
+                                ),
+                                bbox_inches="tight",
+                                pad_inches=0.5,
+                            )
 
                             plt.close()
-
 
                             # print(datapoint, len(sent))
                     #
@@ -383,8 +497,7 @@ class VQA:
         return evaluator.evaluate(quesid2ans)
 
     def save(self, name):
-        torch.save(self.model.state_dict(),
-                   os.path.join(self.output, "%s.pth" % name))
+        torch.save(self.model.state_dict(), os.path.join(self.output, "%s.pth" % name))
 
     def load(self, path):
         print("Load model from %s" % path)
@@ -404,31 +517,27 @@ if __name__ == "__main__":
     # Test or Train
     if args.test is not None:
         # args.fast = args.tiny = False       # Always loading all data in test
-        if 'test' in args.test:
+        if "test" in args.test:
             vqa.predict(
-                get_data_tuple(args.test, bs=950,
-                               shuffle=False, drop_last=False),
-                dump=os.path.join(args.output, 'test_predict.json')
+                get_data_tuple(args.test, bs=950, shuffle=False, drop_last=False),
+                dump=os.path.join(args.output, "test_predict.json"),
             )
 
-        elif 'val' in args.test:    
+        elif "val" in args.test:
             # Since part of valididation data are used in pre-training/fine-tuning,
             # only validate on the minival set.
             result = vqa.evaluate(
-                get_data_tuple('minival', bs=950,
-                               shuffle=False, drop_last=False),
-                dump=os.path.join(args.output, 'minival_predict.json')
+                get_data_tuple("minival", bs=950, shuffle=False, drop_last=False),
+                dump=os.path.join(args.output, "minival_predict.json"),
             )
             print(result)
         else:
             assert False, "No such test option for %s" % args.test
     else:
-        print('Splits in Train data:', vqa.train_tuple.dataset.splits)
+        print("Splits in Train data:", vqa.train_tuple.dataset.splits)
         if vqa.valid_tuple is not None:
-            print('Splits in Valid data:', vqa.valid_tuple.dataset.splits)
+            print("Splits in Valid data:", vqa.valid_tuple.dataset.splits)
             print("Valid Oracle: %0.2f" % (vqa.oracle_score(vqa.valid_tuple) * 100))
         else:
             print("DO NOT USE VALIDATION")
         vqa.train(vqa.train_tuple, vqa.valid_tuple)
-
-

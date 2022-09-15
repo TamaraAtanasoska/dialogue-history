@@ -2,12 +2,21 @@ import tensorflow as tf
 from tensorflow.python.ops import control_flow_ops
 import tensorflow.contrib.layers as tfc_layers
 
-def create_optimizer(network, config, finetune=list(), optim_cst=tf.train.AdamOptimizer, var_list=None, apply_update_ops=True, loss=None):
+
+def create_optimizer(
+    network,
+    config,
+    finetune=list(),
+    optim_cst=tf.train.AdamOptimizer,
+    var_list=None,
+    apply_update_ops=True,
+    loss=None,
+):
 
     # Retrieve conf
-    lrt = config['optimizer']['learning_rate']
-    clip_val = config.get('clip_val', 0.)
-    weight_decay = config.get('weight_decay', 0.)
+    lrt = config["optimizer"]["learning_rate"]
+    clip_val = config.get("clip_val", 0.0)
+    weight_decay = config.get("weight_decay", 0.0)
 
     # create optimizer
     optimizer = optim_cst(learning_rate=lrt)
@@ -45,20 +54,22 @@ def create_optimizer(network, config, finetune=list(), optim_cst=tf.train.AdamOp
     return optimize, [loss, accuracy]
 
 
-def create_multi_gpu_optimizer(networks, config, finetune=list(), optim_cst=tf.train.AdamOptimizer):
+def create_multi_gpu_optimizer(
+    networks, config, finetune=list(), optim_cst=tf.train.AdamOptimizer
+):
 
     # Retrieve conf
-    lrt = config['optimizer']['learning_rate']
-    clip_val = config.get('clip_val', 0.)
-    weight_decay = config.get('weight_decay', 0.)
-    weight_decay_remove = config.get('weight_decay_remove', [])
+    lrt = config["optimizer"]["learning_rate"]
+    clip_val = config.get("clip_val", 0.0)
+    weight_decay = config.get("weight_decay", 0.0)
+    weight_decay_remove = config.get("weight_decay_remove", [])
 
     # Create optimizer
     optimizer = optim_cst(learning_rate=lrt)
 
     gradients, losses, accuracies = [], [], []
     for i, network in enumerate(networks):
-        with tf.device('gpu:{}'.format(i)):
+        with tf.device("gpu:{}".format(i)):
 
             # Retrieve trainable variables from network
             train_vars = network.get_parameters(finetune=finetune)
@@ -68,7 +79,11 @@ def create_multi_gpu_optimizer(networks, config, finetune=list(), optim_cst=tf.t
 
             training_loss = loss
             if weight_decay > 0:
-                training_loss += l2_regularization(train_vars, weight_decay=weight_decay, weight_decay_remove=weight_decay_remove)
+                training_loss += l2_regularization(
+                    train_vars,
+                    weight_decay=weight_decay,
+                    weight_decay_remove=weight_decay_remove,
+                )
 
             # compute gradient
             grads = optimizer.compute_gradients(training_loss, train_vars)
@@ -97,18 +112,22 @@ def create_multi_gpu_optimizer(networks, config, finetune=list(), optim_cst=tf.t
     return optimize, [avg_loss, avg_accuracy]
 
 
-
 def clip_gradient(gvs, clip_val):
     clipped_gvs = [(tf.clip_by_norm(grad, clip_val), var) for grad, var in gvs]
     return clipped_gvs
 
+
 def l2_regularization(params, weight_decay, weight_decay_remove=list()):
     with tf.variable_scope("l2_normalization"):
-        params = [v for v in params if
-                      not any([(needle in v.name) for needle in weight_decay_remove])]
+        params = [
+            v
+            for v in params
+            if not any([(needle in v.name) for needle in weight_decay_remove])
+        ]
         regularizer = tfc_layers.l2_regularizer(scale=weight_decay)
 
         return tfc_layers.apply_regularization(regularizer, weights_list=params)
+
 
 def average_gradient(tower_grads):
     """Calculate the average gradient for each shared variable across all towers.
@@ -127,11 +146,11 @@ def average_gradient(tower_grads):
         #   ((grad0_gpu0, var0_gpu0), ... , (grad0_gpuN, var0_gpuN))
         grads = []
         for g, _ in grad_and_vars:
-          # Add 0 dimension to the gradients to represent the tower.
-          expanded_g = tf.expand_dims(g, 0)
+            # Add 0 dimension to the gradients to represent the tower.
+            expanded_g = tf.expand_dims(g, 0)
 
-          # Append on a 'tower' dimension which we will average over below.
-          grads.append(expanded_g)
+            # Append on a 'tower' dimension which we will average over below.
+            grads.append(expanded_g)
 
         # Average over the 'tower' dimension.
         grad = tf.concat(axis=0, values=grads)
@@ -145,4 +164,3 @@ def average_gradient(tower_grads):
         average_grads.append(grad_and_var)
 
     return average_grads
-

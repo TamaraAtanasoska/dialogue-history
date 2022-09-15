@@ -11,56 +11,90 @@ from utils.datasets.SL.prepro_lxmert import create_data_file
 
 
 class N2NBERTDataset(Dataset):
-    def __init__(self, split='train', split_turns=False, add_sep=False, create_subset=None, with_objects_feat=False,
-                 num_turns=None, game_ids=None, complete_only=False, **kwargs):
+    def __init__(
+        self,
+        split="train",
+        split_turns=False,
+        add_sep=False,
+        create_subset=None,
+        with_objects_feat=False,
+        num_turns=None,
+        game_ids=None,
+        complete_only=False,
+        **kwargs
+    ):
         self.data_args = kwargs
         self.with_objects_feat = with_objects_feat
 
         if with_objects_feat:
-            objects_feat_file = os.path.join(self.data_args['data_dir'],
-                                             self.data_args['data_paths']['ResNet']['objects_features'])
-            objects_feat_mapping_file = os.path.join(self.data_args['data_dir'],
-                                                     self.data_args['data_paths']['ResNet']['objects_features_index'])
-            self.objects_vf = h5py.File(objects_feat_file, 'r')['objects_features']
+            objects_feat_file = os.path.join(
+                self.data_args["data_dir"],
+                self.data_args["data_paths"]["ResNet"]["objects_features"],
+            )
+            objects_feat_mapping_file = os.path.join(
+                self.data_args["data_dir"],
+                self.data_args["data_paths"]["ResNet"]["objects_features_index"],
+            )
+            self.objects_vf = h5py.File(objects_feat_file, "r")["objects_features"]
 
-            with open(objects_feat_mapping_file, 'r') as file_v:
+            with open(objects_feat_mapping_file, "r") as file_v:
                 self.objects_feat_mapping = json.load(file_v)
 
         tmp_key = split + "_process_file"
 
-        if tmp_key in self.data_args['data_paths']:
-            data_file_name = self.data_args['data_paths'][tmp_key]
+        if tmp_key in self.data_args["data_paths"]:
+            data_file_name = self.data_args["data_paths"][tmp_key]
         else:
-            if self.data_args['successful_only']:
-                data_file_name = 'n2n_' + split + '_successful_data_lxmert.json'
+            if self.data_args["successful_only"]:
+                data_file_name = "n2n_" + split + "_successful_data_lxmert.json"
             else:
-                data_file_name = 'n2n_' + split + '_all_data_lxmert.json'
+                data_file_name = "n2n_" + split + "_all_data_lxmert.json"
 
-        if self.data_args['new_data'] or not os.path.isfile(os.path.join(self.data_args['data_dir'], data_file_name)):
+        if self.data_args["new_data"] or not os.path.isfile(
+            os.path.join(self.data_args["data_dir"], data_file_name)
+        ):
             create_data_file(
-                data_dir=self.data_args['data_dir'],
-                data_file=self.data_args['data_paths'][split],
+                data_dir=self.data_args["data_dir"],
+                data_file=self.data_args["data_paths"][split],
                 data_args=self.data_args,
-                vocab_file_name=self.data_args['data_paths']['vocab_file'],
-                split=split
+                vocab_file_name=self.data_args["data_paths"]["vocab_file"],
+                split=split,
             )
 
-        if self.data_args['my_cpu']:
-            if not os.path.isfile(os.path.join(self.data_args['data_dir'], 'subset_' + split + '_lxmert.json')):
-                create_subset(data_dir=self.data_args['data_dir'], dataset_file_name=data_file_name, split=split)
+        if self.data_args["my_cpu"]:
+            if not os.path.isfile(
+                os.path.join(
+                    self.data_args["data_dir"], "subset_" + split + "_lxmert.json"
+                )
+            ):
+                create_subset(
+                    data_dir=self.data_args["data_dir"],
+                    dataset_file_name=data_file_name,
+                    split=split,
+                )
 
-        if self.data_args['my_cpu']:
-            with open(os.path.join(self.data_args['data_dir'], 'subset_' + split + '_lxmert.json'), 'r') as f:
+        if self.data_args["my_cpu"]:
+            with open(
+                os.path.join(
+                    self.data_args["data_dir"], "subset_" + split + "_lxmert.json"
+                ),
+                "r",
+            ) as f:
                 self.n2n_data = json.load(f)
         else:
-            with open(os.path.join(self.data_args['data_dir'], data_file_name), 'r') as f:
+            with open(
+                os.path.join(self.data_args["data_dir"], data_file_name), "r"
+            ) as f:
                 self.n2n_data = json.load(f)
 
-        if self.data_args['breaking']:
+        if self.data_args["breaking"]:
             n2n_data_filtered = {}
             _id = 0
             for example_id, example in self.n2n_data.items():
-                if example["image_file"].split(".")[0] in self.data_args["imgid2fasterRCNNfeatures"]:
+                if (
+                    example["image_file"].split(".")[0]
+                    in self.data_args["imgid2fasterRCNNfeatures"]
+                ):
                     n2n_data_filtered[str(_id)] = example
                     _id += 1
             self.n2n_data = n2n_data_filtered
@@ -138,7 +172,11 @@ class N2NBERTDataset(Dataset):
                         history_turns.append(new_h.strip() + " [SEP]")
                         new_h = ""
                         new_turn = False
-                    if token == "?" and tokens[token_index + 1].lower() in ["yes", "no", "n/a"]:
+                    if token == "?" and tokens[token_index + 1].lower() in [
+                        "yes",
+                        "no",
+                        "n/a",
+                    ]:
                         new_turn = True
                         turn += 1
 
@@ -167,7 +205,11 @@ class N2NBERTDataset(Dataset):
                         history_turns.append(new_h.strip())
                         new_h = ""
                         new_turn = False
-                    if token == "?" and tokens[token_index + 1].lower() in ["yes", "no", "n/a"]:
+                    if token == "?" and tokens[token_index + 1].lower() in [
+                        "yes",
+                        "no",
+                        "n/a",
+                    ]:
                         new_turn = True
                         turn += 1
 
@@ -186,28 +228,33 @@ class N2NBERTDataset(Dataset):
             idx = str(idx)
 
         _data = dict()
-        _data['history'] = np.asarray(self.n2n_data[idx]['history'])
-        _data['history_len'] = self.n2n_data[idx]['history_len']
+        _data["history"] = np.asarray(self.n2n_data[idx]["history"])
+        _data["history_len"] = self.n2n_data[idx]["history_len"]
         # _data['history_q_lens'] = self.n2n_data[idx]['history_q_lens']
-        _data['src_q'] = np.asarray(self.n2n_data[idx]['src_q'])
-        _data['target_q'] = np.asarray(self.n2n_data[idx]['target_q'])
-        _data['tgt_len'] = self.n2n_data[idx]['tgt_len']
-        _data['decider_tgt'] = int(self.n2n_data[idx]['decider_tgt'])
-        _data['objects'] = np.asarray(self.n2n_data[idx]['objects'])
-        _data['objects_mask'] = np.asarray(
-            1 - np.equal(self.n2n_data[idx]['objects'], np.zeros(len(self.n2n_data[idx]['objects']))))
-        _data['spatials'] = np.asarray(self.n2n_data[idx]['spatials'])
-        _data['target_obj'] = self.n2n_data[idx]['target_obj']
-        _data['target_cat'] = self.n2n_data[idx]['target_cat']
-        _data['game_id'] = self.n2n_data[idx]['game_id']
-        _data['bboxes'] = np.asarray(self.n2n_data[idx]['bboxes'])
-        _data['image_url'] = self.n2n_data[idx]['image_url']
-        _data['image_file'] = self.n2n_data[idx]['image_file']
-        _data['history_raw'] = self.n2n_data[idx]['history_raw']
+        _data["src_q"] = np.asarray(self.n2n_data[idx]["src_q"])
+        _data["target_q"] = np.asarray(self.n2n_data[idx]["target_q"])
+        _data["tgt_len"] = self.n2n_data[idx]["tgt_len"]
+        _data["decider_tgt"] = int(self.n2n_data[idx]["decider_tgt"])
+        _data["objects"] = np.asarray(self.n2n_data[idx]["objects"])
+        _data["objects_mask"] = np.asarray(
+            1
+            - np.equal(
+                self.n2n_data[idx]["objects"],
+                np.zeros(len(self.n2n_data[idx]["objects"])),
+            )
+        )
+        _data["spatials"] = np.asarray(self.n2n_data[idx]["spatials"])
+        _data["target_obj"] = self.n2n_data[idx]["target_obj"]
+        _data["target_cat"] = self.n2n_data[idx]["target_cat"]
+        _data["game_id"] = self.n2n_data[idx]["game_id"]
+        _data["bboxes"] = np.asarray(self.n2n_data[idx]["bboxes"])
+        _data["image_url"] = self.n2n_data[idx]["image_url"]
+        _data["image_file"] = self.n2n_data[idx]["image_file"]
+        _data["history_raw"] = self.n2n_data[idx]["history_raw"]
 
         # Load object features
         if self.with_objects_feat:
-            objects_feat_id = self.objects_feat_mapping[self.n2n_data[idx]['game_id']]
+            objects_feat_id = self.objects_feat_mapping[self.n2n_data[idx]["game_id"]]
             objects_feat = self.objects_vf[objects_feat_id]
             _data["objects_feat"] = objects_feat
 

@@ -50,7 +50,9 @@ if __name__ == "__main__":
         # model = DataParallel(model)
     print(model)
 
-    dataset_test = N2NBERTDataset(split="test", **dataset_args, num_turns=5, complete_only=True)
+    dataset_test = N2NBERTDataset(
+        split="test", **dataset_args, num_turns=5, complete_only=True
+    )
 
     dataloader = DataLoader(
         dataset=dataset_test,
@@ -58,7 +60,7 @@ if __name__ == "__main__":
         shuffle=False,
         drop_last=False,
         pin_memory=use_cuda,
-        num_workers=0
+        num_workers=0,
     )
 
     softmax = nn.Softmax(dim=-1)
@@ -76,9 +78,7 @@ if __name__ == "__main__":
     stopwords.update(["yes", "no", "n", "a"])
     stopwords.remove("it")
 
-    tokenizer = RobertaTokenizer.from_pretrained(
-        "roberta-base"
-    )
+    tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
 
     # header = ["<CLS>", "<SEP>", "it", "OTHER"] + list(set((word2category.values())))
     # header2pos = {category: pos for pos, category in enumerate(header)}
@@ -104,7 +104,11 @@ if __name__ == "__main__":
                         history_turns.append(new_h.strip())
                         new_h = ""
                         new_turn = False
-                    if token == "?" and tokens[token_index + 1].lower() in ["yes", "no", "n/a"]:
+                    if token == "?" and tokens[token_index + 1].lower() in [
+                        "yes",
+                        "no",
+                        "n/a",
+                    ]:
                         new_turn = True
                         turn += 1
                 new_history_raw.append(history_turns)
@@ -118,7 +122,7 @@ if __name__ == "__main__":
                 objects=sample["objects"],
                 mask_select=1,
                 target_cat=sample["target_cat"],
-                history_raw=sample["history_raw"]
+                history_raw=sample["history_raw"],
             )
 
             strange_character = tokenizer.tokenize(" hello")[0][0]
@@ -126,15 +130,24 @@ if __name__ == "__main__":
             for layer in range(12):
                 for head in range(12):
                     # has shape (batch_size, num_heads, 200, 200)
-                    lang2lang_attention_probs = model.module.encoder_attentions[layer].detach().cpu().numpy()
+                    lang2lang_attention_probs = (
+                        model.module.encoder_attentions[layer].detach().cpu().numpy()
+                    )
 
                     # has shape (batch_size, 200, 200)
-                    head_lang2lang_attention_probs = lang2lang_attention_probs[:, head, :, :]
+                    head_lang2lang_attention_probs = lang2lang_attention_probs[
+                        :, head, :, :
+                    ]
 
                     for datapoint in range(len(sample["game_id"])):
-                        tokenized_turn = tokenizer.tokenize(sample["history_raw"][datapoint].lower())
+                        tokenized_turn = tokenizer.tokenize(
+                            sample["history_raw"][datapoint].lower()
+                        )
                         tokenized_turn = ["<s>"] + tokenized_turn + ["</s>"]
-                        tokenized_turn = [token[1:] if token[0] == strange_character else token for token in tokenized_turn]
+                        tokenized_turn = [
+                            token[1:] if token[0] == strange_character else token
+                            for token in tokenized_turn
+                        ]
 
                         tokens_turns = []
                         current_turn = 0
@@ -147,22 +160,37 @@ if __name__ == "__main__":
                             elif token == "</s>":
                                 tokens_turns.append(current_turn)
                             else:
-                                if token == "?" and tokenized_turn[token_index+1] in ["yes", "no", "n"]:
+                                if token == "?" and tokenized_turn[token_index + 1] in [
+                                    "yes",
+                                    "no",
+                                    "n",
+                                ]:
                                     tokens_turns.append(current_turn)
                                     tokens_turns.append(current_turn)
-                                    if tokenized_turn[token_index+1] == "n":
+                                    if tokenized_turn[token_index + 1] == "n":
                                         tokens_turns.append(current_turn)
                                         tokens_turns.append(current_turn)
                                     current_turn += 1
                                     already_inserted_answer = True
-                                elif not (token in ["yes", "no"] and tokenized_turn[token_index-1] == "?") and not (token == "n" and tokenized_turn[token_index-1] == "?"):
+                                elif not (
+                                    token in ["yes", "no"]
+                                    and tokenized_turn[token_index - 1] == "?"
+                                ) and not (
+                                    token == "n"
+                                    and tokenized_turn[token_index - 1] == "?"
+                                ):
                                     tokens_turns.append(current_turn)
 
                         tokens_turns_counts = Counter(tokens_turns)
 
                         single_turn_probs = defaultdict(float)
                         for token_index, token in enumerate(tokenized_turn):
-                            single_turn_probs[tokens_turns[token_index]] += head_lang2lang_attention_probs[datapoint][0][token_index] / tokens_turns_counts[tokens_turns[token_index]]
+                            single_turn_probs[tokens_turns[token_index]] += (
+                                head_lang2lang_attention_probs[datapoint][0][
+                                    token_index
+                                ]
+                                / tokens_turns_counts[tokens_turns[token_index]]
+                            )
 
                         for turn, att in single_turn_probs.items():
                             turn_probs[layer][head][turn].append(att)
@@ -184,7 +212,9 @@ if __name__ == "__main__":
                 turn_probs_per_layer = defaultdict(list)
                 for head in turn_probs[layer]:
                     for turn in range(7):
-                        turn_probs_per_layer[turn].append(np.mean(turn_probs[layer][head][turn]))
+                        turn_probs_per_layer[turn].append(
+                            np.mean(turn_probs[layer][head][turn])
+                        )
                 for turn in range(7):
                     writer.writerow([layer, turn, np.mean(turn_probs_per_layer[turn])])
 

@@ -4,7 +4,8 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 import matplotlib
-matplotlib.use('Agg')
+
+matplotlib.use("Agg")
 
 from guesswhat.data_provider.guesswhat_dataset import Dataset
 
@@ -23,15 +24,16 @@ from guesswhat.statistics.question_object import *
 from guesswhat.statistics.question_dialogues import *
 
 
-
 def create_logger(save_path, name):
 
     logger = logging.getLogger()
     # Debug = write everything
     logger.setLevel(logging.DEBUG)
 
-    formatter = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
-    file_handler = RotatingFileHandler(save_path + '/' + name + '.stats.log', 'a', 1000000, 1)
+    formatter = logging.Formatter("%(asctime)s :: %(levelname)s :: %(message)s")
+    file_handler = RotatingFileHandler(
+        save_path + "/" + name + ".stats.log", "a", 1000000, 1
+    )
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
@@ -41,6 +43,7 @@ def create_logger(save_path, name):
     logger.addHandler(steam_handler)
 
     return logger
+
 
 # List all the class to plot
 prototypes = [
@@ -56,43 +59,46 @@ prototypes = [
     SuccessArea,
     QuestionVsObject,
     QuestionVsDialogue,
-    WordCloud
+    WordCloud,
 ]
 
 
 def save_plots(in_dir, out_dir, name, ignore_incomplete):
 
-
     stat_logger = create_logger(out_dir, name)
     dataset = Dataset(in_dir, name)
 
     if ignore_incomplete:
-        dataset.games = [g for g in dataset.games if g.status == "success" or g.status == "failure"]
+        dataset.games = [
+            g for g in dataset.games if g.status == "success" or g.status == "failure"
+        ]
 
     for prototype in prototypes:
         p = prototype(out_dir, dataset.games, stat_logger, name)
         p.save_as_pdf()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
+    parser = argparse.ArgumentParser("Plotter options!")
 
-    parser = argparse.ArgumentParser('Plotter options!')
-
-    parser.add_argument("-data_dir", type=str, help="Directory with data", required=True)
+    parser.add_argument(
+        "-data_dir", type=str, help="Directory with data", required=True
+    )
     parser.add_argument("-out_dir", type=str, help="Output directory", required=True)
     parser.add_argument("-name", type=str, help="Output directory", required=True)
-    parser.add_argument("-ignore_incomplete", type=bool, default=True, help="Ignore incomplete games in the dataset")
+    parser.add_argument(
+        "-ignore_incomplete",
+        type=bool,
+        default=True,
+        help="Ignore incomplete games in the dataset",
+    )
 
     args = parser.parse_args()
 
-    save_plots(in_dir=args.data_dir,
-               out_dir=args.out_dir,
-               name=args.name,
-               ignore_incomplete=args.ignore_incomplete)
-
-
-
-
-
-
+    save_plots(
+        in_dir=args.data_dir,
+        out_dir=args.out_dir,
+        name=args.name,
+        ignore_incomplete=args.ignore_incomplete,
+    )

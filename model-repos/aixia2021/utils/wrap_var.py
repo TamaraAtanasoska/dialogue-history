@@ -3,6 +3,7 @@ from torch.autograd import Variable
 
 use_cuda = torch.cuda.is_available()
 
+
 def to_var(x, volatile=False):
     """Short summary.
 
@@ -22,4 +23,4 @@ def to_var(x, volatile=False):
 
     if use_cuda:
         x = x.cuda()
-    return Variable(x, volatile= volatile)
+    return Variable(x, volatile=volatile)
