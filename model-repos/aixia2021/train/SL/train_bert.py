@@ -16,6 +16,7 @@ from torch.utils.data import DataLoader
 from lxmert.src.lxrt.optimization import BertAdam
 from models.BERTEnsemble import BERTEnsemble
 from models.CNN import ResNet
+from testing.test_bert import test_bert_model
 from train.SL.parser import preprocess_config
 from utils.datasets.SL.N2NBERTDataset import N2NBERTDataset
 from utils.eval import calculate_accuracy
@@ -75,6 +76,7 @@ if __name__ == "__main__":
         help="track experiment using various framework, currently supports W&B: use wandb",
         default=None,
     )
+    parser.add_argument("-test_data_dir", type=str, default=None, help="Test data directory")
 
     args = parser.parse_args()
     print(args.exp_name)
@@ -161,9 +163,11 @@ if __name__ == "__main__":
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         start_e = checkpoint["epoch"] + 1
         loss = checkpoint["loss"]
+        val_accuracies = checkpoint["val_accuracies"]
     else:
         start_e = 0
         loss = 0
+        val_accuracies = []
 
     for epoch in range(start_e, optimizer_args["no_epochs"]):
         start = time()
@@ -320,6 +324,7 @@ if __name__ == "__main__":
                     "model_state_dict": model.state_dict(),
                     "optimizer_state_dict": optimizer.state_dict(),
                     "loss": loss,
+                    "val_accuracies": val_accuracies,
                 },
                 model_file,
             )
@@ -342,7 +347,7 @@ if __name__ == "__main__":
             "Validation Accuracy::  Guesser %.3f"
             % (np.mean(validation_guesser_accuracy))
         )
-
+        val_accuracies.append(np.mean(validation_guesser_accuracy))
         if args.exp_tracker is not None:
             wandb.log(
                 {
@@ -359,3 +364,17 @@ if __name__ == "__main__":
 
         if exp_config["save_models"]:
             print("Saved model to %s" % (model_file))
+
+    best_epoch = np.argmax(val_accuracies)
+    best_model_file = os.path.join(
+        model_dir,
+        "".join(["model_ensemble_", args.bin_name, "_E_", str(best_epoch)]),
+    )
+    print(f'Best model: {best_model_file}')
+
+    if args.test_data_dir is not None:
+        dataset_args["data_dir"] = args.test_data_dir
+        print('Evaluating over test data using best model')
+        test_bert_model(best_ckpt=best_model_file, dataset_args=dataset_args,
+                   ensemble_args=ensemble_args, optimizer_args=optimizer_args, exp_config=exp_config)
+
