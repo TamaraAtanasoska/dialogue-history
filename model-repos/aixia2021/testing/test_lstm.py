@@ -1,5 +1,7 @@
 import argparse
+import random
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -17,11 +19,16 @@ from utils.wrap_var import to_var
 # TODO Make this capitalised everywhere to inform it is a global variable
 use_cuda = torch.cuda.is_available()
 
-def test_model(best_ckpt, model_type, dataset_args, ensemble_args, optimizer_args):
+def test_model(best_ckpt, model_type, dataset_args, ensemble_args, optimizer_args, exp_config):
     device = torch.device("cuda:0") if use_cuda else torch.device("cpu")
     multiple_gpus_available = torch.cuda.device_count() > 1
-    # Init model
+    random.seed(exp_config['seed'])
+    np.random.seed(exp_config['seed'])
+    torch.manual_seed(exp_config["seed"])
+    if device.type == "cuda":
+        torch.cuda.manual_seed_all(exp_config["seed"])
 
+    # Init model
     if model_type == "blind":
         model = EnsembleDeVries(**ensemble_args)
     else: # model_type == "visual":
@@ -133,4 +140,4 @@ if __name__ == "__main__":
 
     ensemble_args, dataset_args, optimizer_args, exp_config = preprocess_config(args)
 
-    test_model(model_type=args.model_type, best_ckpt=args.best_ckpt, dataset_args=dataset_args, ensemble_args=ensemble_args, optimizer_args=optimizer_args)
+    test_model(model_type=args.model_type, best_ckpt=args.best_ckpt, dataset_args=dataset_args, ensemble_args=ensemble_args, optimizer_args=optimizer_args, exp_config=exp_config)

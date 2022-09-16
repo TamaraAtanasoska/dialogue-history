@@ -268,6 +268,7 @@ if __name__ == "__main__":
                     val_guesser_loss = torch.cat([val_guesser_loss, guesser_loss.data])
                     val_total_loss = torch.cat([val_total_loss, loss.data])
 
+        val_accuracies.append(np.mean(validation_guesser_accuracy))
         if exp_config["save_models"]:
             model_file = os.path.join(
                 model_dir,
@@ -331,4 +332,4 @@ if __name__ == "__main__":
         dataset_args["data_dir"] = args.test_data_dir
         print('Evaluating over test data using best model')
         test_model(model_type='visual', best_ckpt=best_model_file, dataset_args=dataset_args,
-                   ensemble_args=ensemble_args, optimizer_args=optimizer_args)
+                   ensemble_args=ensemble_args, optimizer_args=optimizer_args,exp_config=exp_config)

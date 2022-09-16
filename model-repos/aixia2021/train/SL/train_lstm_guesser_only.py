@@ -327,4 +327,4 @@ if __name__ == "__main__":
     if args.test_data_dir is not None:
         dataset_args["data_dir"] = args.test_data_dir
         print('Evaluating over test data using best model')
-        test_model(model_type='blind', best_ckpt=best_model_file,dataset_args=dataset_args, ensemble_args=ensemble_args, optimizer_args=optimizer_args)
+        test_model(model_type='blind', best_ckpt=best_model_file,dataset_args=dataset_args, ensemble_args=ensemble_args, optimizer_args=optimizer_args,exp_config=exp_config)
