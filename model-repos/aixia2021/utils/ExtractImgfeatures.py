@@ -29,7 +29,7 @@ def extract_features(img_dir, model, img_list, my_cpu=False):
         avg_img_features = np.zeros((len(img_list), 2048))
 
     name2id = dict()
-    print("creating features ....")
+    print("extracting features ....")
     for i in range(len(img_list)):
         if i >= 5 and my_cpu:
             break
@@ -40,6 +40,7 @@ def extract_features(img_dir, model, img_list, my_cpu=False):
         conv_features, feat = model(ImgTensor)
         avg_img_features[i] = feat.cpu().data.numpy()
         name2id[img_list[i]] = i
+    print("Done.")
 
     return avg_img_features, name2id
 
@@ -51,18 +52,17 @@ def get_image_data(n2n_file):
         data.append(v["image_file"])
     return data
 
-def create_image_features(image_dir, n2n_train_set, n2n_val_set, n2n_test_set, image_features_json_path, image_features_path):
+def create_image_features(image_dir, n2n_train_set, n2n_val_set, image_features_json_path, image_features_path):
     start = time()
-    print("Start")
-    splits = ["train", "val", "test"]
+    print("Creating new ResNet features")
+    splits = ["train", "val"]
 
     my_cpu = False
 
-    images = {"train": [], "val": [], "test": []}
+    images = {"train": [], "val": []}
 
     images['train'] = get_image_data(n2n_train_set)
     images['val'] = get_image_data(n2n_val_set)
-    images['test'] = get_image_data(n2n_test_set)
 
     model = ResNet()
     model = model.eval()
@@ -102,9 +102,6 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-n2n_val_set", type=str, default="data/n2n_val_successful_data.json"
-    )
-    parser.add_argument(
-        "-n2n_test_set", type=str, default="data/n2n_test_successful_data.json"
     )
     parser.add_argument(
         "-image_features_json_path",
