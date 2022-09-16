@@ -17,6 +17,78 @@ from utils.wrap_var import to_var
 # TODO Make this capitalised everywhere to inform it is a global variable
 use_cuda = torch.cuda.is_available()
 
+def test_model(best_ckpt, model_type, dataset_args, ensemble_args, optimizer_args):
+    device = torch.device("cuda:0") if use_cuda else torch.device("cpu")
+    multiple_gpus_available = torch.cuda.device_count() > 1
+    # Init model
+
+    if model_type == "blind":
+        model = EnsembleDeVries(**ensemble_args)
+    else: # model_type == "visual":
+        model = EnsembleGuesserOnly(**ensemble_args)
+    if multiple_gpus_available:
+        model = DataParallel(model)
+    model.to(device)
+    optimizer = optim.Adam(model.parameters(), optimizer_args["lr"])
+    checkpoint = torch.load(best_ckpt, map_location=device)
+    model.load_state_dict(checkpoint["model_state_dict"])
+    optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+    softmax = nn.Softmax(dim=-1)
+
+    dataset_test = N2NDataset(split="test", **dataset_args, complete_only=True)
+
+    dataloader = DataLoader(
+        dataset=dataset_test,
+        batch_size=optimizer_args["batch_size"],
+        shuffle=True,
+        drop_last=False,
+        pin_memory=use_cuda,
+        num_workers=0,
+    )
+    predictions = []
+    targets = []
+    with torch.no_grad():
+        for i_batch, sample in tqdm.tqdm(
+                enumerate(dataloader), total=len(dataloader), ncols=100
+        ):
+
+            sample["tgt_len"], ind = torch.sort(sample["tgt_len"], 0, descending=True)
+
+            # Get batch
+            for k, v in sample.items():
+                if k == "tgt_len":
+                    sample[k] = to_var(v)
+                elif torch.is_tensor(v):
+                    sample[k] = to_var(v[ind])
+                elif isinstance(v, list):
+                    sample[k] = [v[i] for i in ind]
+
+            avg_img_features = sample["image"]
+
+            guesser_out = model(
+                src_q=sample["src_q"],
+                tgt_len=sample["tgt_len"],
+                visual_features=avg_img_features,
+                spatials=sample["spatials"],
+                objects=sample["objects"],
+                mask_select=1,
+                target_cat=sample["target_cat"],
+                history=sample["history"],
+                history_len=sample["history_len"],
+            )
+            if model_type == "blind":
+                predictions.append(softmax(guesser_out))
+            else:
+                predictions.append(
+                    softmax(guesser_out[1])
+                )  # guesser_out is a tuple containing (decider_out, guesser_out) See forward method of EnsembleGuesserOnly
+            targets.append(sample["target_obj"].reshape(-1))
+            # guesser_accuracy = calculate_accuracy(softmax(guesser_out), sample['target_obj'].reshape(-1))
+
+    accuracy = calculate_accuracy(torch.cat(predictions), torch.cat(targets))
+    print(f"Guesser Accuracy: {accuracy}")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -59,99 +131,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    device = torch.device("cuda:0") if use_cuda else torch.device("cpu")
-
     ensemble_args, dataset_args, optimizer_args, exp_config = preprocess_config(args)
 
-    float_tensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
-
-    # Init model
-    if args.model_type == "blind":
-        model = EnsembleDeVries(**ensemble_args)
-    elif args.model_type == "visual":
-        model = EnsembleGuesserOnly(**ensemble_args)
-    if use_cuda:
-        model.cuda()
-        model = DataParallel(model)
-    print(model)
-    optimizer = optim.Adam(model.parameters(), optimizer_args["lr"])
-    checkpoint = torch.load(args.best_ckpt, map_location=device)
-    model.load_state_dict(checkpoint["model_state_dict"])
-    optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-    softmax = nn.Softmax(dim=-1)
-
-    # For Guesser
-    guesser_loss_function = nn.CrossEntropyLoss()
-
-    # For Decider
-    decider_cross_entropy = nn.CrossEntropyLoss(reduction="sum")
-
-    # For QGen.
-    _cross_entropy = nn.CrossEntropyLoss(ignore_index=0)
-
-    dataset_test = N2NDataset(split="test", **dataset_args, complete_only=True)
-
-    test_guess_accuracy = list()
-    dataloader = DataLoader(
-        dataset=dataset_test,
-        batch_size=optimizer_args["batch_size"],
-        shuffle=True,
-        drop_last=False,
-        pin_memory=use_cuda,
-        num_workers=0,
-    )
-    predictions = []
-    targets = []
-    with torch.no_grad():
-        for i_batch, sample in tqdm.tqdm(
-            enumerate(dataloader), total=len(dataloader), ncols=100
-        ):
-            # if i_batch > 60 and args.breaking:
-            #     print('Breaking after processing 60 batch')
-            #     break
-            #
-            # if epoch == 14 and i_batch ==52:
-            #     aa = 0
-
-            sample["tgt_len"], ind = torch.sort(sample["tgt_len"], 0, descending=True)
-            batch_size = ind.size(0)
-
-            # Get batch
-            for k, v in sample.items():
-                if k == "tgt_len":
-                    sample[k] = to_var(v)
-                elif torch.is_tensor(v):
-                    sample[k] = to_var(v[ind])
-                elif isinstance(v, list):
-                    sample[k] = [v[i] for i in ind]
-
-            avg_img_features = sample["image"]
-
-            guesser_loss = to_var(torch.zeros(1))
-            decider_loss = to_var(torch.zeros(1))
-
-            decider_accuracy = 0
-            ask_accuracy = 0
-
-            guesser_out = model(
-                src_q=sample["src_q"],
-                tgt_len=sample["tgt_len"],
-                visual_features=avg_img_features,
-                spatials=sample["spatials"],
-                objects=sample["objects"],
-                mask_select=1,
-                target_cat=sample["target_cat"],
-                history=sample["history"],
-                history_len=sample["history_len"],
-            )
-            if args.model_type == "blind":
-                predictions.append(softmax(guesser_out))
-            else:
-                predictions.append(
-                    softmax(guesser_out[1])
-                )  # guesser_out is a tuple containing (decider_out, guesser_out) See forward method of EnsembleGuesserOnly
-            targets.append(sample["target_obj"].reshape(-1))
-            # guesser_accuracy = calculate_accuracy(softmax(guesser_out), sample['target_obj'].reshape(-1))
-
-    accuracy = calculate_accuracy(torch.cat(predictions), torch.cat(targets))
-    print(f"Guesser Accuracy: {accuracy}")
+    test_model(model_type=args.model_type, best_ckpt=args.best_ckpt, dataset_args=dataset_args, ensemble_args=ensemble_args, optimizer_args=optimizer_args)
