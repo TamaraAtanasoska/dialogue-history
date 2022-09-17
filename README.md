@@ -249,6 +249,11 @@ We have introduced [Weights & Biases](https://wandb.ai/site) as platform support
 
 If you decide to use the option, Weights & Biases will ask you to log in so you can have access to the visualizations and the logging of the runs. You will be prompted to pick an option about how to use W&B, and logging in will subsequently require your W&B API key. It might be more practical for you to already finish this setup before starting the training runs with this option. You can read [here](https://docs.wandb.ai/ref/cli/wandb-login) how to do that from the command line. Creating an account before this step is necessary. 
 
+In each of the individual training files in the [train folder](model-repos/aixia2021/train/SL) we initialise the entity and project name([example](https://github.com/TamaraAtanasoska/dialogue-history/blob/73cdd2cf8675b6297f7b1bd6bfed32589680cf7b/model-repos/aixia2021/train/SL/train_lxmert_guesser_only.py#L81). You can edit this line to add your own names, and learn more about these settings in the [W&B documentation](https://docs.wandb.ai/ref/python/init). 
+
+#### Decider
+
+As you will notice in the commands below, we are always training with the ```-no_decider``` flag. This is because we didn't use the [Decider component](https://github.com/TamaraAtanasoska/dialogue-history/blob/main/model-repos/aixia2021/models/Decider.py) for any of our expriments, although it is present in the repository we cloned. We haven't throughly tested either that part of the code or the impact it has on the results. You could use the Decider by omitting the ```-no_decider``` flag. Read more about the Decider [here](https://arxiv.org/pdf/1805.06960.pdf). 
 
 #### Language/Blind models
 
@@ -293,7 +298,7 @@ To train the model from scratch, add ```-from_scratch```. To use preloaded MS-CO
 
 ```
 mkdir -p lxmert/snap/pretrained 
-wget http://nlp.cs.unc.edu/data/model_LXRT.pth -P snap/pretrained
+wget http://nlp.cs.unc.edu/data/model_LXRT.pth -P lxmert/snap/pretrained
 ```
 
 To train, use the following command:
@@ -367,21 +372,8 @@ To test the ```Aixia2021``` models on experiment data, you would need to take th
     -model_type blind  #or visual
     ```
 
-## Future plans (for September 2022)
+## Code improvements accross repositories
 
-We will mainly focus on doing expriements without the raw category as part of the input and making the LXMERT model work for us. When possible we will add a few more small improvements. 
+In the original GuessWhat repostitory we have improved the inconsistent documentation, adjusted the code to account for the new version of the dataset and fixed some other small errors. We contributed our changes back to the original repository making us official contributors (see [here](https://github.com/GuessWhatGame/generic/pull/1), [here](https://github.com/GuessWhatGame/guesswhat/pull/31) and [here](https://github.com/GuessWhatGame/guesswhat/pull/30)). We hope this helps people to be able to just run the repository without issues in 2022. 
 
-### Small improvements list
-
-General: 
-- remove all unused files 
-- docs: W&B project name and entity set up, the Decider
-- remove the Tensorboard dependency (eg. vis.py )
-- blend the experiments file for clarity and speed
-- increase speed closer to max GPU% (for LSTM models)
-
-Testing and training:
-- create ResNet image and object features on the go (add or modify option)
-- save and show the best checkpoint
-- integrate testing in the train script and trigger it with the best epoch
-- combine all the run(train/test) scripts in one 
+The Aixia2021 repository was our main experiment respository, so we have spent more time changing and customising. We have removed all deprecation and unsafe computation warnings, and currently all models run error free. Because of our limited computational resources we spent some time on optimisation and performance improvement, resulting with up to 30% improvement of the VLSTM/GDSE model, as well as 1-2 minutes per epoch for the BERT models. You might be able to notice a more dramatic improvement if you have more powerful architecture to run them on, as for us they already ran with over 90% of the GPU usage in the first place. Some other notable changes: we removed unused dependecies like Tensorboard, introduced saving the best checkpoint and optionally triggering testing on it, as well as simplifying the image feature creation by creating them on the go and not as a separate step. For more details check the [PR history](https://github.com/TamaraAtanasoska/dialogue-history/pulls?q=is%3Apr+is%3Aclosed). 
