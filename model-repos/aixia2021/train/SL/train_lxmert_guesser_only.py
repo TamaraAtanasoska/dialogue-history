@@ -17,6 +17,7 @@ from torch.utils.data import DataLoader
 from lxmert.src.lxrt.optimization import BertAdam
 from models.CNN import ResNet
 from models.LXMERTEnsembleGuesserOnly import LXMERTEnsembleGuesserOnly
+from testing.test_lxmert import test_lxmert_model
 from train.SL.parser import preprocess_config
 from utils.datasets.SL.N2NLXMERTDataset import N2NLXMERTDataset
 from utils.eval import calculate_accuracy
@@ -73,6 +74,9 @@ if __name__ == "__main__":
         type=str,
         help="track experiment using various framework, currently supports W&B: use wandb",
         default=None,
+    )
+    parser.add_argument(
+        "-test_data_dir", type=str, default=None, help="Test data directory"
     )
 
     args = parser.parse_args()
@@ -164,7 +168,6 @@ if __name__ == "__main__":
 
     # Init model
     model = LXMERTEnsembleGuesserOnly(**ensemble_args, from_scratch=args.from_scratch)
-    # TODO Checkpoint loading
 
     if multiple_gpus_available:
         model = DataParallel(model)
@@ -196,14 +199,14 @@ if __name__ == "__main__":
             **dataset_args,
             complete_only=True,
             imgid2fasterRCNNfeatures=imgid2fasterRCNNfeatures,
-            num_turns=args.num_turns
+            num_turns=args.num_turns,
         )
         dataset_val = N2NLXMERTDataset(
             split="val",
             **dataset_args,
             complete_only=True,
             imgid2fasterRCNNfeatures=imgid2fasterRCNNfeatures,
-            num_turns=args.num_turns
+            num_turns=args.num_turns,
         )
 
     print("Initializing the optimizer...")
@@ -224,9 +227,11 @@ if __name__ == "__main__":
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         start_e = checkpoint["epoch"] + 1
         loss = checkpoint["loss"]
+        val_accuracies = checkpoint["val_accuracies"]
     else:
         start_e = 0
         loss = 0
+        val_accuracies = []
 
     for epoch in range(start_e, optimizer_args["no_epochs"]):
         start = time()
@@ -354,7 +359,7 @@ if __name__ == "__main__":
                     val_guesser_loss = torch.cat([val_guesser_loss, guesser_loss.data])
 
                     val_total_loss = torch.cat([val_total_loss, loss.data])
-
+        val_accuracies.append(np.mean(validation_guesser_accuracy))
         if exp_config["save_models"]:
             model_file = os.path.join(
                 model_dir,
@@ -366,6 +371,7 @@ if __name__ == "__main__":
                     "model_state_dict": model.state_dict(),
                     "optimizer_state_dict": optimizer.state_dict(),
                     "loss": loss,
+                    "val_accuracies": val_accuracies,
                 },
                 model_file,
             )
@@ -405,3 +411,22 @@ if __name__ == "__main__":
 
         if exp_config["save_models"]:
             print("Saved model to %s" % (model_file))
+
+    best_epoch = np.argmax(val_accuracies)
+    best_model_file = os.path.join(
+        model_dir,
+        "".join(["model_ensemble_", args.bin_name, "_E_", str(best_epoch)]),
+    )
+    print(f"Best model: {best_model_file}")
+
+    if args.test_data_dir is not None:
+        dataset_args["data_dir"] = args.test_data_dir
+        print("Evaluating over test data using best model")
+        test_lxmert_model(
+            imgid2fasterRCNNfeatures=imgid2fasterRCNNfeatures,
+            best_ckpt=best_model_file,
+            dataset_args=dataset_args,
+            ensemble_args=ensemble_args,
+            optimizer_args=optimizer_args,
+            exp_config=exp_config,
+        )
