@@ -6,7 +6,7 @@ We reproduced part of the experiments in the paper: Greco, C., Testoni, A., & Be
 
 The team consists of [Tamara Atanasoska](https://github.com/TamaraAtanasoska), [Galina Ryazanskaya](https://github.com/flying-bear), and [Bhuvanesh Verma](https://github.com/Bhuvanesh-Verma). The team contributed to all of the tasks equally. 
 
-If you would like to read more about the reproduction details, our comparison with the original paper, and see results from each of the base models and experiments, please read the [project report](project-docs/project-report.pdf).
+If you would like to read more about the reproduction details, our comparison with the original paper, and see results from each of the base models and experiments, please read the [project report](project-docs/project-report.pdf). You can read the final report with our extended expriments that go beyond the scope of replication paper [here](project-docs/final-report.pdf). 
 
 ## Cloned repositories and code organisation
 
@@ -219,9 +219,25 @@ python src/guesswhat/train/train_guesser.py \
 
 ### Training the four Guesser models of the Aixia20201 repository
 
+#### General info
+
+##### W&B integration
+
+We have introduced [Weights & Biases](https://wandb.ai/site) as platform support to visualize and keep track of our experiments. You could take advantage of this integration by adding the option ```-exp_tracker wandb``` to the training commands. 
+
+If you decide to use the option, Weights & Biases will ask you to log in so you can have access to the visualizations and the logging of the runs. You will be prompted to pick an option about how to use W&B, and logging in will subsequently require your W&B API key. It might be more practical for you to already finish this setup before starting the training runs with this option. You can read [here](https://docs.wandb.ai/ref/cli/wandb-login) how to do that from the command line. Creating an account before this step is necessary. 
+
+In each of the individual training files in the [train folder](model-repos/aixia2021/train/SL) we initialise the entity and project name([example](https://github.com/TamaraAtanasoska/dialogue-history/blob/73cdd2cf8675b6297f7b1bd6bfed32589680cf7b/model-repos/aixia2021/train/SL/train_lxmert_guesser_only.py#L81). You can edit this line to add your own names, and learn more about these settings in the [W&B documentation](https://docs.wandb.ai/ref/python/init). 
+
+##### Decider
+
+As you will notice in the commands below, we are always training with the ```-no_decider``` flag. This is because we didn't use the [Decider component](https://github.com/TamaraAtanasoska/dialogue-history/blob/main/model-repos/aixia2021/models/Decider.py) for any of our expriments, although it is present in the repository we cloned. We haven't throughly tested either that part of the code or the impact it has on the results. You could use the Decider by omitting the ```-no_decider``` flag. Read more about the Decider [here](https://arxiv.org/pdf/1805.06960.pdf). 
+
+#### Training
+
 The scripts below assume that you are already in the model directory at ```model-repos/aixia2021/```.
 
-#### Common training parameters between the models
+##### Common training parameters between the models
 
 The text below is copied from the original repo. 
 
@@ -245,21 +261,9 @@ num_turns : Max number of turns allowed in a dialogue
 ckpt : Path to saved checkpoint
 ```
 
-#### W&B integration
-
-We have introduced [Weights & Biases](https://wandb.ai/site) as platform support to visualize and keep track of our experiments. You could take advantage of this integration by adding the option ```-exp_tracker wandb``` to the training commands. 
-
-If you decide to use the option, Weights & Biases will ask you to log in so you can have access to the visualizations and the logging of the runs. You will be prompted to pick an option about how to use W&B, and logging in will subsequently require your W&B API key. It might be more practical for you to already finish this setup before starting the training runs with this option. You can read [here](https://docs.wandb.ai/ref/cli/wandb-login) how to do that from the command line. Creating an account before this step is necessary. 
-
-In each of the individual training files in the [train folder](model-repos/aixia2021/train/SL) we initialise the entity and project name([example](https://github.com/TamaraAtanasoska/dialogue-history/blob/73cdd2cf8675b6297f7b1bd6bfed32589680cf7b/model-repos/aixia2021/train/SL/train_lxmert_guesser_only.py#L81). You can edit this line to add your own names, and learn more about these settings in the [W&B documentation](https://docs.wandb.ai/ref/python/init). 
-
-#### Decider
-
-As you will notice in the commands below, we are always training with the ```-no_decider``` flag. This is because we didn't use the [Decider component](https://github.com/TamaraAtanasoska/dialogue-history/blob/main/model-repos/aixia2021/models/Decider.py) for any of our expriments, although it is present in the repository we cloned. We haven't throughly tested either that part of the code or the impact it has on the results. You could use the Decider by omitting the ```-no_decider``` flag. Read more about the Decider [here](https://arxiv.org/pdf/1805.06960.pdf). 
+**Important:** For all models, the ```-test_data_dir <path>``` command line option can be added. This will trigger automatic testing with the saved checkpoint for best epoch. The saved checkpoint will always be shown at the end of training. The test directory should contain all the required files discussed in the [testing section](https://github.com/TamaraAtanasoska/dialogue-history#testing-and-running-experiments) below.
 
 #### Language/Blind models
-
-**Important:** For all models, the ```-test_data_dir <path>``` command line option can be added. This will trigger automatic testing with the saved checkpoint for best epoch. The saved checkpoint will always be shown at the end of training. The test directory should contain all the required files discussed in the [testing section](https://github.com/TamaraAtanasoska/dialogue-history#testing-and-running-experiments) below.
 
 ##### Bling LSTM model (inspired by the original GuessWhat?! model)
 The original GuessWhat!? model that is featured in the original repo is part of the Aixia2021 ensamble as well. To train it, please use: 
@@ -342,8 +346,8 @@ To test the ```Aixia2021``` models on experiment data, you would need to take th
     CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER/ \
     python utils/datasets/SL/prepro.py \ #use utils/datasets/SL/prepro_lxmert.py for LXMERT
     -data_dir data/test/experiment/no-last-turn \
-    -data_file data/test/experiment/no-last-turn/guesswhat.test.jsonl.gz \
-    -vocab_file data/test/experiment/no-last-turn/vocab.json \
+    -data_file guesswhat.test.jsonl.gz \
+    -vocab_file vocab.json \
     -split test
    ```   
     Note: the directory passed to the ```-img_dir``` option needs to contain both the train and valid images in the same directory. 
