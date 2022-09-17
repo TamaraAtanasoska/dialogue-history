@@ -298,7 +298,7 @@ To train the model from scratch, add ```-from_scratch```. To use preloaded MS-CO
 
 ```
 mkdir -p lxmert/snap/pretrained 
-wget http://nlp.cs.unc.edu/data/model_LXRT.pth -P snap/pretrained
+wget http://nlp.cs.unc.edu/data/model_LXRT.pth -P lxmert/snap/pretrained
 ```
 
 To train, use the following command:
