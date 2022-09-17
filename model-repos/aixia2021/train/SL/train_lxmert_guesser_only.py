@@ -208,8 +208,8 @@ if __name__ == "__main__":
             imgid2fasterRCNNfeatures=imgid2fasterRCNNfeatures,
             num_turns=args.num_turns,
         )
-        dataset_train.prepare_features(split='train')
-        dataset_val.prepare_features(split='val')
+        dataset_train.prepare_features(split="train")
+        dataset_val.prepare_features(split="val")
 
     print("Initializing the optimizer...")
     num_batches_per_epoch = len(dataset_train) // optimizer_args["batch_size"]

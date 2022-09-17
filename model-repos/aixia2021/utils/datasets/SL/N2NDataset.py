@@ -14,6 +14,7 @@ from utils.extract_object_features import create_object_features
 
 logger = logging.getLogger(__name__)
 
+
 class N2NDataset(Dataset):
     def __init__(
         self,
@@ -23,7 +24,7 @@ class N2NDataset(Dataset):
         with_objects_feat=False,
         complete_only=False,
         random_image=False,
-        **kwargs
+        **kwargs,
     ):
         self.data_args = kwargs
         self.random_image = random_image
@@ -112,16 +113,20 @@ class N2NDataset(Dataset):
         visual_feat_mapping_file = os.path.join(
             self.data_args["data_dir"], self.data_args["data_paths"]["ResNet"]["img2id"]
         )
-        if not (os.path.isfile(visual_feat_file) and os.path.isfile(visual_feat_mapping_file)):
+        if not (
+            os.path.isfile(visual_feat_file)
+            and os.path.isfile(visual_feat_mapping_file)
+        ):
             logger.info(f"ResNet image features not found.")
             n2n_train_file = "n2n_train_successful_data.json"
             n2n_val_file = "n2n_val_successful_data.json"
-            create_image_features(image_dir=self.data_args["data_paths"]["image_path"],
-                                  n2n_train_set=os.path.join(self.data_args["data_dir"], n2n_train_file),
-                                  n2n_val_set=os.path.join(self.data_args["data_dir"], n2n_val_file),
-                                  image_features_path=visual_feat_file,
-                                  image_features_json_path=visual_feat_mapping_file,
-                                  )
+            create_image_features(
+                image_dir=self.data_args["data_paths"]["image_path"],
+                n2n_train_set=os.path.join(self.data_args["data_dir"], n2n_train_file),
+                n2n_val_set=os.path.join(self.data_args["data_dir"], n2n_val_file),
+                image_features_path=visual_feat_file,
+                image_features_json_path=visual_feat_mapping_file,
+            )
 
         self.vf = np.asarray(h5py.File(visual_feat_file, "r")[split + "_img_features"])
 
@@ -137,14 +142,23 @@ class N2NDataset(Dataset):
                 self.data_args["data_dir"],
                 self.data_args["data_paths"]["ResNet"]["objects_features_index"],
             )
-            if not (os.path.isfile(objects_feat_file) and os.path.isfile(objects_feat_mapping_file)):
+            if not (
+                os.path.isfile(objects_feat_file)
+                and os.path.isfile(objects_feat_mapping_file)
+            ):
                 logger.info(f"ResNet object features not found.")
-                create_object_features(image_dir=self.data_args["data_paths"]["image_path"],
-                                      training_set=os.path.join(self.data_args["data_dir"], self.data_args["data_paths"]['train']),
-                                      validation_set=os.path.join(self.data_args["data_dir"], self.data_args["data_paths"]['val']),
-                                      objects_features_path=objects_feat_file,
-                                      objects_features_index_path=objects_feat_mapping_file,
-                                      )
+                create_object_features(
+                    image_dir=self.data_args["data_paths"]["image_path"],
+                    training_set=os.path.join(
+                        self.data_args["data_dir"],
+                        self.data_args["data_paths"]["train"],
+                    ),
+                    validation_set=os.path.join(
+                        self.data_args["data_dir"], self.data_args["data_paths"]["val"]
+                    ),
+                    objects_features_path=objects_feat_file,
+                    objects_features_index_path=objects_feat_mapping_file,
+                )
             self.objects_vf = h5py.File(objects_feat_file, "r")["objects_features"]
 
             with open(objects_feat_mapping_file, "r") as file_v:

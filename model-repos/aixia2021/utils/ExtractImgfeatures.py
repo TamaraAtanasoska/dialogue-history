@@ -44,6 +44,7 @@ def extract_features(img_dir, model, img_list, my_cpu=False):
 
     return avg_img_features, name2id
 
+
 def get_image_data(n2n_file):
     data = []
     with open(n2n_file, "r") as file_v:
@@ -52,7 +53,10 @@ def get_image_data(n2n_file):
         data.append(v["image_file"])
     return data
 
-def create_image_features(image_dir, n2n_train_set, n2n_val_set, image_features_json_path, image_features_path):
+
+def create_image_features(
+    image_dir, n2n_train_set, n2n_val_set, image_features_json_path, image_features_path
+):
     start = time()
     print("Creating new ResNet features")
     splits = ["train", "val"]
@@ -61,8 +65,8 @@ def create_image_features(image_dir, n2n_train_set, n2n_val_set, image_features_
 
     images = {"train": [], "val": []}
 
-    images['train'] = get_image_data(n2n_train_set)
-    images['val'] = get_image_data(n2n_val_set)
+    images["train"] = get_image_data(n2n_train_set)
+    images["val"] = get_image_data(n2n_val_set)
 
     model = ResNet()
     model = model.eval()

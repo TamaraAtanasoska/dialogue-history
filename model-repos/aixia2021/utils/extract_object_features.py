@@ -10,9 +10,16 @@ from torchvision import transforms
 
 from models.CNN import ResNet
 
-def create_object_features(image_dir, training_set, validation_set, objects_features_index_path, objects_features_path):
+
+def create_object_features(
+    image_dir,
+    training_set,
+    validation_set,
+    objects_features_index_path,
+    objects_features_path,
+):
     games = []
-    print('Creating object features .....')
+    print("Creating object features .....")
     print("Loading file: {}".format(training_set))
     with gzip.open(training_set) as file:
         for json_game in file:
