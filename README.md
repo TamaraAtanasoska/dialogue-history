@@ -6,7 +6,7 @@ We reproduced part of the experiments in the paper: Greco, C., Testoni, A., & Be
 
 The team consists of [Tamara Atanasoska](https://github.com/TamaraAtanasoska), [Galina Ryazanskaya](https://github.com/flying-bear), and [Bhuvanesh Verma](https://github.com/Bhuvanesh-Verma). The team contributed to all of the tasks equally. 
 
-If you would like to read more about the reproduction details, our comparison with the original paper, and see results from each of the base models and experiments, please read the [project report](project-docs/project-report.pdf).
+If you would like to read more about the reproduction details, our comparison with the original paper, and see results from each of the base models and experiments, please read the [project report](project-docs/project-report.pdf). You can read the final report with our extended expriments that go beyond the scope of replication paper [here](project-docs/final-report.pdf). 
 
 ## Cloned repositories and code organisation
 
