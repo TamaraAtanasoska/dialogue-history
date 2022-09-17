@@ -249,6 +249,8 @@ We have introduced [Weights & Biases](https://wandb.ai/site) as platform support
 
 If you decide to use the option, Weights & Biases will ask you to log in so you can have access to the visualizations and the logging of the runs. You will be prompted to pick an option about how to use W&B, and logging in will subsequently require your W&B API key. It might be more practical for you to already finish this setup before starting the training runs with this option. You can read [here](https://docs.wandb.ai/ref/cli/wandb-login) how to do that from the command line. Creating an account before this step is necessary. 
 
+In each of the individual training files in the [train folder](model-repos/aixia2021/train/SL) we initialise the entity and project name([example](https://github.com/TamaraAtanasoska/dialogue-history/blob/73cdd2cf8675b6297f7b1bd6bfed32589680cf7b/model-repos/aixia2021/train/SL/train_lxmert_guesser_only.py#L81). You can edit this line to add your own names, and learn more about these settings in the [W&B documentation](https://docs.wandb.ai/ref/python/init). 
+
 #### Decider
 
 As you will notice in the commands below, we are always training with the ```-no_decider``` flag. This is because we didn't use the [Decider component](https://github.com/TamaraAtanasoska/dialogue-history/blob/main/model-repos/aixia2021/models/Decider.py) for any of our expriments, although it is present in the repository we cloned. We haven't throughly tested either that part of the code or the impact it has on the results. You could use the Decider by omitting the ```-no_decider``` flag. Read more about the Decider [here](https://arxiv.org/pdf/1805.06960.pdf). 
