@@ -346,8 +346,8 @@ To test the ```Aixia2021``` models on experiment data, you would need to take th
     CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER/ \
     python utils/datasets/SL/prepro.py \ #use utils/datasets/SL/prepro_lxmert.py for LXMERT
     -data_dir data/test/experiment/no-last-turn \
-    -data_file data/test/experiment/no-last-turn/guesswhat.test.jsonl.gz \
-    -vocab_file data/test/experiment/no-last-turn/vocab.json \
+    -data_file guesswhat.test.jsonl.gz \
+    -vocab_file vocab.json \
     -split test
    ```   
     Note: the directory passed to the ```-img_dir``` option needs to contain both the train and valid images in the same directory. 
