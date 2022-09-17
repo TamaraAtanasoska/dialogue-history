@@ -71,7 +71,9 @@ if __name__ == "__main__":
         help="track experiment using various framework, currently supports W&B: use wandb",
         default=None,
     )
-    parser.add_argument("-test_data_dir", type=str, default=None, help="Test data directory")
+    parser.add_argument(
+        "-test_data_dir", type=str, default=None, help="Test data directory"
+    )
 
     args = parser.parse_args()
     print(args.exp_name)
@@ -322,9 +324,16 @@ if __name__ == "__main__":
         model_dir,
         "".join(["model_ensemble_", args.bin_name, "_E_", str(best_epoch)]),
     )
-    print(f'Best model: {best_model_file}')
+    print(f"Best model: {best_model_file}")
 
     if args.test_data_dir is not None:
         dataset_args["data_dir"] = args.test_data_dir
-        print('Evaluating over test data using best model')
-        test_model(model_type='blind', best_ckpt=best_model_file,dataset_args=dataset_args, ensemble_args=ensemble_args, optimizer_args=optimizer_args,exp_config=exp_config)
+        print("Evaluating over test data using best model")
+        test_model(
+            model_type="blind",
+            best_ckpt=best_model_file,
+            dataset_args=dataset_args,
+            ensemble_args=ensemble_args,
+            optimizer_args=optimizer_args,
+            exp_config=exp_config,
+        )

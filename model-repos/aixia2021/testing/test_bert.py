@@ -18,11 +18,12 @@ from utils.wrap_var import to_var
 # TODO Make this capitalised everywhere to inform it is a global variable
 use_cuda = torch.cuda.is_available()
 
+
 def test_bert_model(best_ckpt, dataset_args, ensemble_args, optimizer_args, exp_config):
     multiple_gpus_available = torch.cuda.device_count() > 1
     device = torch.device("cuda:0") if use_cuda else torch.device("cpu")
-    random.seed(exp_config['seed'])
-    np.random.seed(exp_config['seed'])
+    random.seed(exp_config["seed"])
+    np.random.seed(exp_config["seed"])
     torch.manual_seed(exp_config["seed"])
     if device.type == "cuda":
         torch.cuda.manual_seed_all(exp_config["seed"])
@@ -58,7 +59,7 @@ def test_bert_model(best_ckpt, dataset_args, ensemble_args, optimizer_args, exp_
     targets = []
     with torch.no_grad():
         for i_batch, sample in tqdm.tqdm(
-                enumerate(dataloader), total=len(dataloader), ncols=100
+            enumerate(dataloader), total=len(dataloader), ncols=100
         ):
 
             sample["tgt_len"], ind = torch.sort(sample["tgt_len"], 0, descending=True)
@@ -160,5 +161,10 @@ if __name__ == "__main__":
 
     # Load the Arguments and Hyperparamters
     ensemble_args, dataset_args, optimizer_args, exp_config = preprocess_config(args)
-    test_bert_model(best_ckpt=args.best_ckpt, dataset_args=dataset_args,
-               ensemble_args=ensemble_args, optimizer_args=optimizer_args, exp_config=exp_config)
+    test_bert_model(
+        best_ckpt=args.best_ckpt,
+        dataset_args=dataset_args,
+        ensemble_args=ensemble_args,
+        optimizer_args=optimizer_args,
+        exp_config=exp_config,
+    )
