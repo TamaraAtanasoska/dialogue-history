@@ -151,6 +151,8 @@ if __name__ == "__main__":
         dataset_val = N2NDataset(
             split="val", **dataset_args, complete_only=True, num_turns=args.num_turns
         )
+        dataset_train.prepare_features(split="train")
+        dataset_val.prepare_features(split="val")
 
     for epoch in range(start_e, optimizer_args["no_epochs"]):
         start = time()

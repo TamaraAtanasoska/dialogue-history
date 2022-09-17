@@ -8,6 +8,7 @@ import numpy as np
 from torch.utils.data import Dataset
 
 from utils.datasets.SL.prepro_lxmert import create_data_file
+from utils.extract_object_features import create_object_features
 
 
 class N2NBERTDataset(Dataset):
@@ -35,6 +36,22 @@ class N2NBERTDataset(Dataset):
                 self.data_args["data_dir"],
                 self.data_args["data_paths"]["ResNet"]["objects_features_index"],
             )
+            if not (
+                os.path.isfile(objects_feat_file)
+                and os.path.isfile(objects_feat_mapping_file)
+            ):
+                create_object_features(
+                    image_dir=self.data_args["data_paths"]["image_path"],
+                    training_set=os.path.join(
+                        self.data_args["data_dir"],
+                        self.data_args["data_paths"]["train"],
+                    ),
+                    validation_set=os.path.join(
+                        self.data_args["data_dir"], self.data_args["data_paths"]["val"]
+                    ),
+                    objects_features_path=objects_feat_file,
+                    objects_features_index_path=objects_feat_mapping_file,
+                )
             self.objects_vf = h5py.File(objects_feat_file, "r")["objects_features"]
 
             with open(objects_feat_mapping_file, "r") as file_v:

@@ -7,7 +7,9 @@ import h5py
 import numpy as np
 from torch.utils.data import Dataset
 
+from utils.ExtractImgfeatures import create_image_features
 from utils.datasets.SL.prepro_lxmert import create_data_file
+from utils.extract_object_features import create_object_features
 
 
 class N2NLXMERTDataset(Dataset):
@@ -30,31 +32,6 @@ class N2NLXMERTDataset(Dataset):
 
         if random_image:
             print("Using random images...")
-
-        visual_feat_file = os.path.join(
-            self.data_args["data_dir"],
-            self.data_args["data_paths"]["ResNet"]["image_features"],
-        )
-        visual_feat_mapping_file = os.path.join(
-            self.data_args["data_dir"], self.data_args["data_paths"]["ResNet"]["img2id"]
-        )
-        self.vf = np.asarray(h5py.File(visual_feat_file, "r")[split + "_img_features"])
-        with open(visual_feat_mapping_file, "r") as file_v:
-            self.vf_mapping = json.load(file_v)[split + "2id"]
-
-        if with_objects_feat:
-            objects_feat_file = os.path.join(
-                self.data_args["data_dir"],
-                self.data_args["data_paths"]["ResNet"]["objects_features"],
-            )
-            objects_feat_mapping_file = os.path.join(
-                self.data_args["data_dir"],
-                self.data_args["data_paths"]["ResNet"]["objects_features_index"],
-            )
-            self.objects_vf = h5py.File(objects_feat_file, "r")["objects_features"]
-
-            with open(objects_feat_mapping_file, "r") as file_v:
-                self.objects_feat_mapping = json.load(file_v)
 
         tmp_key = split + "_process_file"
 
@@ -240,6 +217,63 @@ class N2NLXMERTDataset(Dataset):
             self.n2n_data[k]["FasterRCNN"] = self.data_args["imgid2fasterRCNNfeatures"][
                 self.n2n_data[k]["image_file"].split(".")[0]
             ]
+
+    def prepare_features(self, split):
+        visual_feat_file = os.path.join(
+            self.data_args["data_dir"],
+            self.data_args["data_paths"]["ResNet"]["image_features"],
+        )
+        visual_feat_mapping_file = os.path.join(
+            self.data_args["data_dir"], self.data_args["data_paths"]["ResNet"]["img2id"]
+        )
+        if not (
+            os.path.isfile(visual_feat_file)
+            and os.path.isfile(visual_feat_mapping_file)
+        ):
+            n2n_train_file = "n2n_train_successful_data.json"
+            n2n_val_file = "n2n_val_successful_data.json"
+            create_image_features(
+                image_dir=self.data_args["data_paths"]["image_path"],
+                n2n_train_set=os.path.join(self.data_args["data_dir"], n2n_train_file),
+                n2n_val_set=os.path.join(self.data_args["data_dir"], n2n_val_file),
+                image_features_path=visual_feat_file,
+                image_features_json_path=visual_feat_mapping_file,
+            )
+
+        self.vf = np.asarray(h5py.File(visual_feat_file, "r")[split + "_img_features"])
+
+        with open(visual_feat_mapping_file, "r") as file_v:
+            self.vf_mapping = json.load(file_v)[split + "2id"]
+
+        if self.with_objects_feat:
+            objects_feat_file = os.path.join(
+                self.data_args["data_dir"],
+                self.data_args["data_paths"]["ResNet"]["objects_features"],
+            )
+            objects_feat_mapping_file = os.path.join(
+                self.data_args["data_dir"],
+                self.data_args["data_paths"]["ResNet"]["objects_features_index"],
+            )
+            if not (
+                os.path.isfile(objects_feat_file)
+                and os.path.isfile(objects_feat_mapping_file)
+            ):
+                create_object_features(
+                    image_dir=self.data_args["data_paths"]["image_path"],
+                    training_set=os.path.join(
+                        self.data_args["data_dir"],
+                        self.data_args["data_paths"]["train"],
+                    ),
+                    validation_set=os.path.join(
+                        self.data_args["data_dir"], self.data_args["data_paths"]["val"]
+                    ),
+                    objects_features_path=objects_feat_file,
+                    objects_features_index_path=objects_feat_mapping_file,
+                )
+            self.objects_vf = h5py.File(objects_feat_file, "r")["objects_features"]
+
+            with open(objects_feat_mapping_file, "r") as file_v:
+                self.objects_feat_mapping = json.load(file_v)
 
     def __len__(self):
         return len(self.n2n_data)
