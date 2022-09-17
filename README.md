@@ -257,6 +257,8 @@ As you will notice in the commands below, we are always training with the ```-no
 
 #### Language/Blind models
 
+**Important:** For all models, the ```-test_data_dir <path>``` command line option can be added. This will trigger automatic testing with the saved checkpoint for best epoch. The saved checkpoint will always be shown at the end of training. The test directory should contain all the required files discussed in the [testing section](https://github.com/TamaraAtanasoska/dialogue-history#testing-and-running-experiments) below.
+
 ##### Bling LSTM model (inspired by the original GuessWhat?! model)
 The original GuessWhat!? model that is featured in the original repo is part of the Aixia2021 ensamble as well. To train it, please use: 
 
