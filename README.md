@@ -372,21 +372,8 @@ To test the ```Aixia2021``` models on experiment data, you would need to take th
     -model_type blind  #or visual
     ```
 
-## Future plans (for September 2022)
+## Code improvements accross repositories
 
-We will mainly focus on doing expriements without the raw category as part of the input and making the LXMERT model work for us. When possible we will add a few more small improvements. 
+In the original GuessWhat repostitory we have improved the inconsistent documentation, adjusted the code to account for the new version of the dataset and fixed some other small errors. We contributed our changes back to the original repository making us official contributors (see [here](https://github.com/GuessWhatGame/generic/pull/1), [here](https://github.com/GuessWhatGame/guesswhat/pull/31) and [here](https://github.com/GuessWhatGame/guesswhat/pull/30)). We hope this helps people to be able to just run the repository without issues in 2022. 
 
-### Small improvements list
-
-General: 
-- remove all unused files 
-- docs: W&B project name and entity set up, the Decider
-- remove the Tensorboard dependency (eg. vis.py )
-- blend the experiments file for clarity and speed
-- increase speed closer to max GPU% (for LSTM models)
-
-Testing and training:
-- create ResNet image and object features on the go (add or modify option)
-- save and show the best checkpoint
-- integrate testing in the train script and trigger it with the best epoch
-- combine all the run(train/test) scripts in one 
+The Aixia2021 repository was our main experiment respository, so we have spent more time changing and customising. We have removed all deprecation and unsafe computation warnings, and currently all models run error free. Because of our limited computational resources we spent some time on optimisation and performance improvement, resulting with up to 30% improvement of the VLSTM/GDSE model, as well as 1-2 minutes per epoch for the BERT models. You might be able to notice a more dramatic improvement if you have more powerful architecture to run them on, as for us they already ran with over 90% of the GPU usage in the first place. Some other notable changes: we removed unused dependecies like Tensorboard, introduced saving the best checkpoint and optionally triggering testing on it, as well as simplifying the image feature creation by creating them on the go and not as a separate step. 
