@@ -79,7 +79,7 @@
   },
 
   "data_paths": {
-    "image_path":"./data/GuessWhat/",
+    "image_path":"./data/images",
     "train": "guesswhat.train.jsonl.gz",
     "val": "guesswhat.valid.jsonl.gz",
     "test":"guesswhat.test.jsonl.gz",
