@@ -50,6 +50,7 @@ def test_lxmert_model(
         complete_only=True,
         imgid2fasterRCNNfeatures=imgid2fasterRCNNfeatures,
     )
+    dataset_test.prepare_features(split="test")
 
     checkpoint = torch.load(best_ckpt, map_location=device)
     model.load_state_dict(checkpoint["model_state_dict"])
@@ -61,16 +62,13 @@ def test_lxmert_model(
         batch_size=optimizer_args["batch_size"],
         shuffle=True,
         drop_last=False,
-        pin_memory=use_cuda,
+        pin_memory=True if device.type == "cuda" else False,
         num_workers=0,
     )
     with torch.no_grad():
         for i_batch, sample in tqdm.tqdm(
             enumerate(dataloader), total=len(dataloader), ncols=100
         ):
-            if i_batch > 60 and args.breaking:
-                print("Breaking after processing 60 batch")
-                break
 
             sample["tgt_len"], ind = torch.sort(sample["tgt_len"], 0, descending=True)
 
@@ -86,17 +84,17 @@ def test_lxmert_model(
             avg_img_features = sample["image"]
 
             decider_out, guesser_out = model(
-                src_q=sample["src_q"],
-                tgt_len=sample["tgt_len"],
-                visual_features=avg_img_features,
-                spatials=sample["spatials"],
-                objects=sample["objects"],
-                target_cat=sample["target_cat"],
+                src_q=sample["src_q"].to(device),
+                tgt_len=sample["tgt_len"].to(device),
+                visual_features=avg_img_features.to(device),
+                spatials=sample["spatials"].to(device),
+                objects=sample["objects"].to(device),
+                target_cat=sample["target_cat"].to(device),
                 history_raw=sample["history_raw"],
-                fasterrcnn_features=sample["FasterRCNN"]["features"],
-                fasterrcnn_boxes=sample["FasterRCNN"]["boxes"],
-                history=sample["history"],
-                history_len=sample["history_len"],
+                fasterrcnn_features=sample["FasterRCNN"]["features"].to(device),
+                fasterrcnn_boxes=sample["FasterRCNN"]["boxes"].to(device),
+                history=sample["history"].to(device),
+                history_len=sample["history_len"].to(device),
             )
 
             # guesser_accuracy = calculate_accuracy(softmax(guesser_out), sample['target_obj'].reshape(-1))

@@ -52,7 +52,7 @@
   "optimizer": {
     "lr": 0.00001,
     "no_epochs": 30,
-    "batch_size": 16
+    "batch_size": 8
   },
 
   "exp_config": {

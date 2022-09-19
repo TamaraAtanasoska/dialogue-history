@@ -46,6 +46,7 @@ def test_model(
     softmax = nn.Softmax(dim=-1)
 
     dataset_test = N2NDataset(split="test", **dataset_args, complete_only=True)
+    dataset_test.prepare_features(split="test")
 
     dataloader = DataLoader(
         dataset=dataset_test,
