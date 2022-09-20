@@ -2,7 +2,7 @@
 
 This reproduction project is part of the assignments for the Language, Vision and Interaction course by [Prof. Dr. Schlangen](https://scholar.google.com/citations?user=QoDgwZYAAAAJ&hl=en) at the University of Potsdam, part of the [Cognitive Systems Masters program](https://www.uni-potsdam.de/de/studium/studienangebot/masterstudium/master-a-z/cognitive-systems).  
 
-We reproduced part of the experiments in the paper: Greco, C., Testoni, A., & Bernardi, R. (2020). Which Turn do Neural Models Exploit the Most to Solve GuessWhat? Diving into the Dialogue History Encoding in Transformers and LSTMs. NL4AI@AI*IA. [(link)](https://github.com/TamaraAtanasoska/dialogue-history/blob/main/project-docs/Greco%2C%20Testoni%2C%20Bernardi_2020.pdf). We focused on the blind and multimodal baseline with both LSTM and Transformer models, as well as two additional experiements where the history is reversed and the last turn is omitted. A presentation outlining the most important info from the paper and our initial plan can be found [here](https://github.com/TamaraAtanasoska/dialogue-history/blob/main/project-docs/Paper%20presentation%20%2B%20replicaition%20plan.pdf).
+We reproduced part of the experiments in the paper: Greco, C., Testoni, A., & Bernardi, R. (2020). Which Turn do Neural Models Exploit the Most to Solve GuessWhat? Diving into the Dialogue History Encoding in Transformers and LSTMs. NL4AI@AI*IA. [(link)](https://github.com/TamaraAtanasoska/dialogue-history/blob/main/project-docs/Greco%2C%20Testoni%2C%20Bernardi_2020.pdf). We focused on the blind and multimodal baseline with both LSTM and Transformer models, as well as two additional experiments where the history is reversed and the last turn is omitted. A presentation outlining the most important info from the paper and our initial plan can be found [here](https://github.com/TamaraAtanasoska/dialogue-history/blob/main/project-docs/Paper%20presentation%20%2B%20replicaition%20plan.pdf).
 
 The team consists of [Tamara Atanasoska](https://github.com/TamaraAtanasoska), [Galina Ryazanskaya](https://github.com/flying-bear), and [Bhuvanesh Verma](https://github.com/Bhuvanesh-Verma). The team contributed to all of the tasks equally. 
 
@@ -231,7 +231,7 @@ In each of the individual training files in the [train folder](model-repos/aixia
 
 ##### Decider
 
-As you will notice in the commands below, we are always training with the ```-no_decider``` flag. This is because we didn't use the [Decider component](https://github.com/TamaraAtanasoska/dialogue-history/blob/main/model-repos/aixia2021/models/Decider.py) for any of our expriments, although it is present in the repository we cloned. We haven't throughly tested either that part of the code or the impact it has on the results. You could use the Decider by omitting the ```-no_decider``` flag. Read more about the Decider [here](https://arxiv.org/pdf/1805.06960.pdf). 
+As you will notice in the commands below, we are always training with the ```-no_decider``` flag. This is because we didn't use the [Decider component](https://github.com/TamaraAtanasoska/dialogue-history/blob/main/model-repos/aixia2021/models/Decider.py) for any of our experiments, although it is present in the repository we cloned. We haven't throughly tested either that part of the code or the impact it has on the results. You could use the Decider by omitting the ```-no_decider``` flag. Read more about the Decider [here](https://arxiv.org/pdf/1805.06960.pdf). 
 
 #### Training
 
@@ -266,7 +266,7 @@ ckpt : Path to saved checkpoint
 #### Language/Blind models
 
 ##### Bling LSTM model (inspired by the original GuessWhat?! model)
-The original GuessWhat!? model that is featured in the original repo is part of the Aixia2021 ensamble as well. To train it, please use: 
+The original GuessWhat!? model that is featured in the original repo is part of the Aixia2021 ensemble as well. To train it, please use: 
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=PATH/TO/PROJECT/BASE/FOLDER \
@@ -380,8 +380,8 @@ To test the ```Aixia2021``` models on experiment data, you would need to take th
     -model_type blind  #or visual
     ```
 
-## Code improvements accross repositories
+## Code improvements across repositories
 
-In the original GuessWhat repostitory we have improved the inconsistent documentation, adjusted the code to account for the new version of the dataset and fixed some other small errors. We contributed our changes back to the original repository making us official contributors (see [here](https://github.com/GuessWhatGame/generic/pull/1), [here](https://github.com/GuessWhatGame/guesswhat/pull/31) and [here](https://github.com/GuessWhatGame/guesswhat/pull/30)). We hope this helps people to be able to just run the repository without issues in 2022. 
+In the original GuessWhat repository we have improved the inconsistent documentation, adjusted the code to account for the new version of the dataset and fixed some other small errors. We contributed our changes back to the original repository making us official contributors (see [here](https://github.com/GuessWhatGame/generic/pull/1), [here](https://github.com/GuessWhatGame/guesswhat/pull/31) and [here](https://github.com/GuessWhatGame/guesswhat/pull/30)). We hope this helps people to be able to just run the repository without issues in 2022. 
 
-The Aixia2021 repository was our main experiment respository, so we have spent more time changing and customising. We have removed all deprecation and unsafe computation warnings, and currently all models run error free. Because of our limited computational resources we spent some time on optimisation and performance improvement, resulting with up to 30% improvement of the VLSTM/GDSE model, as well as 1-2 minutes per epoch for the BERT models. You might be able to notice a more dramatic improvement if you have more powerful architecture to run them on, as for us they already ran with over 90% of the GPU usage in the first place. Some other notable changes: we removed unused dependecies like Tensorboard, introduced saving the best checkpoint and optionally triggering testing on it, as well as simplifying the image feature creation by creating them on the go and not as a separate step. For more details check the [PR history](https://github.com/TamaraAtanasoska/dialogue-history/pulls?q=is%3Apr+is%3Aclosed). 
+The Aixia2021 repository was our main experiment repository, so we have spent more time changing and customising. We have removed all deprecation and unsafe computation warnings, and currently all models run error free. Because of our limited computational resources we spent some time on optimisation and performance improvement, resulting with up to 30% improvement of the VLSTM/GDSE model, as well as 1-2 minutes per epoch for the BERT models. You might be able to notice a more dramatic improvement if you have more powerful architecture to run them on, as for us they already ran with over 90% of the GPU usage in the first place. Some other notable changes: we removed unused dependencies like Tensorboard, introduced saving the best checkpoint and optionally triggering testing on it, as well as simplifying the image feature creation by creating them on the go and not as a separate step. For more details check the [PR history](https://github.com/TamaraAtanasoska/dialogue-history/pulls?q=is%3Apr+is%3Aclosed). 
